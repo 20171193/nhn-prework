@@ -15,7 +15,7 @@
 ## 1. 저장소
 - **GitHub 주소**: https://github.com/20171193/nhn-prework
 - **공개 범위**: 공개(Public)
-- **기본 브랜치**: main
+- **기본 브랜치**: master
 - **작업 브랜치**: `feature/combat` (개발1), `feature/augment` (개발2)
 - **씬 파일 규칙**: `.unity` 씬 파일은 담당자 한 명만 수정 (병합 충돌 방지)
 
