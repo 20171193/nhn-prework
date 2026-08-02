@@ -108,3 +108,6 @@ InitTestScene*.unity*
 # 더미 에셋 관리용 폴더 (git 추적 제외)
 /Assets/99. Imports/
 /Assets/99. Imports.meta
+
+# 개인별 VSCode 설정 (git 추적 제외)
+/.vscode/
