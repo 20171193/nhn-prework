@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 public enum ControlMode
@@ -10,14 +11,18 @@ public enum ControlMode
 public class PlayerController : MonoBehaviour
 {
     public float moveSpeed = 5f;
-    public float fireInterval = 0.5f;
+    public float attackRate = 2f; // 초당 발사 횟수 (p/s)
     public float projectileSpeed = 12f;
     public GameObject projectilePrefab;
     public Transform[] dummyTargets;
     public ControlMode mode = ControlMode.AutoAimAutoFire;
+    public FireGaugeUI fireGauge;
+    public TMP_Text modeLabel;
 
     Camera cam;
     float fireTimer;
+
+    float FireInterval => attackRate > 0f ? 1f / attackRate : Mathf.Infinity;
 
     void Start()
     {
@@ -30,6 +35,9 @@ public class PlayerController : MonoBehaviour
         HandleMovement();
         HandleAimAndFire();
         fireTimer -= Time.deltaTime;
+
+        if (fireGauge != null)
+            fireGauge.SetValue(1f - fireTimer / FireInterval);
     }
 
     void HandleModeSwitch()
@@ -37,6 +45,10 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha1)) mode = ControlMode.AutoAimAutoFire;
         if (Input.GetKeyDown(KeyCode.Alpha2)) mode = ControlMode.ManualAimAutoFire;
         if (Input.GetKeyDown(KeyCode.Alpha3)) mode = ControlMode.ManualAimManualFire;
+
+        if (modeLabel != null)
+            modeLabel.text = $"Mode: {(int)mode} - {mode}  (Press 1/2/3 to switch)\n" +
+                "Move: WASD/Arrows   Aim(2/3): Mouse   Fire(3): LMB";
     }
 
     void HandleMovement()
@@ -65,7 +77,7 @@ public class PlayerController : MonoBehaviour
             if (fireTimer <= 0f)
             {
                 Fire(FacingDirection());
-                fireTimer = fireInterval;
+                fireTimer = FireInterval;
             }
             return;
         }
@@ -80,7 +92,7 @@ public class PlayerController : MonoBehaviour
             if (fireTimer <= 0f)
             {
                 Fire(FacingDirection());
-                fireTimer = fireInterval;
+                fireTimer = FireInterval;
             }
         }
         else // ManualAimManualFire
@@ -88,7 +100,7 @@ public class PlayerController : MonoBehaviour
             if (Input.GetButtonDown("Fire1") && fireTimer <= 0f)
             {
                 Fire(FacingDirection());
-                fireTimer = fireInterval;
+                fireTimer = FireInterval;
             }
         }
     }
@@ -143,12 +155,5 @@ public class PlayerController : MonoBehaviour
         var proj = Instantiate(projectilePrefab, transform.position + (Vector3)(dir * 0.6f), transform.rotation);
         if (proj.TryGetComponent(out Projectile p))
             p.Init(dir, projectileSpeed);
-    }
-
-    void OnGUI()
-    {
-        GUI.Label(new Rect(10, 10, 500, 60),
-            $"조작 모드: {(int)mode}안 - {mode}  (숫자키 1/2/3으로 전환)\n" +
-            "이동: WASD/화살표   조준(2/3안): 마우스   발사(3안): 좌클릭");
     }
 }
