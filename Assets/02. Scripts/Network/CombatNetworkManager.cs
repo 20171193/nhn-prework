@@ -15,6 +15,10 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
 
     void Start()
     {
+        // 기본값(SerializationRate 10/s)은 위치 갱신이 뜸해서 원격 캐릭터가 눈에 띄게 뒤처져 보인다.
+        PhotonNetwork.SerializationRate = 20;
+        PhotonNetwork.SendRate = 30;
+
         SetStatus("Connecting...");
         PhotonNetwork.ConnectUsingSettings();
     }

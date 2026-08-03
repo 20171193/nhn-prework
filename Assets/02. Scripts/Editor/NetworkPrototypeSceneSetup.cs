@@ -11,21 +11,22 @@ using UnityEngine.SceneManagement;
 // PhotonNetwork.Instantiate가 참조할 NetworkPlayer 프리팹을 Resources 폴더에 만든다.
 public static class NetworkPrototypeSceneSetup
 {
-    const string PrefabPath = "Assets/02. Scripts/Network/Resources/NetworkPlayer.prefab";
+    const string PrefabPath = "Assets/Resources/NetworkPlayer.prefab";
 
     [MenuItem("Tools/Combat Prototype/Add Network 1v1 Setup")]
     static void Build()
     {
+        var font = PrototypeFonts.GetDefaultFont();
+        if (font == null) return;
+
+        // 프리팹은 씬 오브젝트 배치 여부와 무관하게 항상 최신 상태인지 확인/생성한다.
+        var networkPlayerPrefab = GetOrCreateNetworkPlayerPrefab();
+
         if (GameObject.Find("CombatNetworkManager") != null)
         {
             Debug.LogWarning("CombatNetworkManager가 이미 씬에 있습니다.");
             return;
         }
-
-        var font = PrototypeFonts.GetDefaultFont();
-        if (font == null) return;
-
-        var networkPlayerPrefab = GetOrCreateNetworkPlayerPrefab();
 
         var spawnA = new GameObject("SpawnPoint_1").transform;
         spawnA.position = new Vector3(-3f, 0f, 0f);
@@ -49,21 +50,42 @@ public static class NetworkPrototypeSceneSetup
     static GameObject GetOrCreateNetworkPlayerPrefab()
     {
         var existing = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
-        if (existing != null) return existing;
+        return existing != null ? existing : RebuildNetworkPlayerPrefab(useCustomSync: true);
+    }
+
+    // 두 동기화 방식을 A/B로 바꿔가며 테스트하기 위한 메뉴.
+    // NetworkPlayer 프리팹은 이름이 고정("NetworkPlayer")이라 CombatNetworkManager 쪽 코드는
+    // 그대로 두고 프리팹 내부의 동기화 컴포넌트만 교체한다.
+    [MenuItem("Tools/Combat Prototype/Network Sync/Use Snapshot Interpolation (Custom)")]
+    static void SwitchToCustomSync() => RebuildNetworkPlayerPrefab(useCustomSync: true);
+
+    [MenuItem("Tools/Combat Prototype/Network Sync/Use PhotonTransformView (Official)")]
+    static void SwitchToPhotonTransformView() => RebuildNetworkPlayerPrefab(useCustomSync: false);
+
+    static GameObject RebuildNetworkPlayerPrefab(bool useCustomSync)
+    {
+        if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
+            AssetDatabase.DeleteAsset(PrefabPath);
 
         var template = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         template.name = "NetworkPlayer";
 
-        var transformView = template.AddComponent<PhotonTransformView>();
+        Component observed = useCustomSync
+            ? template.AddComponent<NetworkTransformSync>()
+            : template.AddComponent<PhotonTransformView>();
 
         var view = template.AddComponent<PhotonView>();
-        view.ObservedComponents = new List<Component> { transformView };
-        view.Synchronization = ViewSynchronization.UnreliableOnChange;
+        view.ObservedComponents = new List<Component> { observed };
+        view.Synchronization = ViewSynchronization.ReliableDeltaCompressed;
 
         template.AddComponent<NetworkPlayerController>();
 
         var prefab = PrefabUtility.SaveAsPrefabAsset(template, PrefabPath);
         Object.DestroyImmediate(template);
+
+        Debug.Log(useCustomSync
+            ? "NetworkPlayer: 커스텀 스냅샷 보간 방식으로 재생성했습니다."
+            : "NetworkPlayer: PhotonTransformView(공식) 방식으로 재생성했습니다.");
         return prefab;
     }
 
