@@ -6,6 +6,7 @@ public class WeaponStats
     public float projectileRange;
     public int projectileCount;
     public float attackRate;
+    public float spreadAngleDegrees;
 
     public WeaponStats(WeaponStatsData data)
     {
@@ -13,5 +14,6 @@ public class WeaponStats
         projectileRange = data.projectileRange;
         projectileCount = data.projectileCount;
         attackRate = data.attackRate;
+        spreadAngleDegrees = data.spreadAngleDegrees;
     }
 }

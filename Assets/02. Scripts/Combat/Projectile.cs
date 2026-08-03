@@ -10,11 +10,11 @@ public class Projectile : MonoBehaviour
     float maxRange;
     Vector3 spawnPosition;
 
-    public void Init(Vector2 dir, ProjectileStats stats, float range)
+    public void Init(Vector2 dir, float speed, float damage, float range)
     {
         direction = dir.normalized;
-        speed = stats.speed;
-        damage = stats.damage;
+        this.speed = speed;
+        this.damage = damage;
         maxRange = range;
         spawnPosition = transform.position;
 

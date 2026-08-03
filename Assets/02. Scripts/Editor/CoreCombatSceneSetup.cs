@@ -5,9 +5,10 @@ using UnityEngine.SceneManagement;
 
 // Tools > Combat Prototype > Add Core Combat Stats 실행 시
 // 기본값 ScriptableObject를 만들고, 씬의 Player/Weapon(Grip)/Shoulder에
-// 코어 전투 컴포넌트를 부착하고 Resources의 Projectile 프리팹에
-// 이동/충돌 컴포넌트를 채워 넣는다. 각 단계는 이미 되어 있으면 건너뛰므로
-// 여러 번 실행해도 안전하다. 네트워크와 무관하게 싱글플레이로 테스트한다.
+// 코어 전투 컴포넌트(스탯/이동/조준/발사/증강 컨텍스트)를 부착하고
+// Resources의 Projectile 프리팹에 이동/충돌 컴포넌트를 채워 넣는다.
+// 각 단계는 이미 되어 있으면 건너뛰므로 여러 번 실행해도 안전하다.
+// 네트워크와 무관하게 싱글플레이로 테스트한다.
 public static class CoreCombatSceneSetup
 {
     const string DataFolder = "Assets/02. Scripts/Combat/Data";
@@ -41,10 +42,36 @@ public static class CoreCombatSceneSetup
             statsController.baseData = playerStatsData;
         }
 
+        var grip = player.transform.Find("Grip");
+        var weaponTransform = player.transform.Find("Weapon");
+        GameObject weaponObj;
+        WeaponController weaponController;
+        if (weaponTransform == null)
+        {
+            weaponObj = new GameObject("Weapon");
+            weaponObj.transform.SetParent(player.transform, false);
+
+            weaponController = weaponObj.AddComponent<WeaponController>();
+            weaponController.baseData = weaponStatsData;
+            weaponController.muzzle = grip != null ? grip : weaponObj.transform;
+            if (grip == null)
+                Debug.LogWarning("Player 아래에서 Grip을 못 찾아 Weapon 자신을 muzzle로 사용했습니다.");
+        }
+        else
+        {
+            weaponObj = weaponTransform.gameObject;
+            weaponController = weaponObj.GetComponent<WeaponController>();
+        }
+
+        // 증강 시스템이 실제로 붙는 지점. Player/Weapon 컴포넌트가 준비된 뒤에 연결한다.
+        var combatContext = player.GetComponent<PlayerCombatContext>();
+        if (combatContext == null)
+            combatContext = player.AddComponent<PlayerCombatContext>();
+        combatContext.playerStatsController = statsController;
+        combatContext.weaponController = weaponController;
+
         if (player.GetComponent<PlayerMovementController>() == null)
             player.AddComponent<PlayerMovementController>();
-
-        var grip = player.transform.Find("Grip");
 
         var aimController = player.GetComponent<PlayerAimController>();
         if (aimController == null)
@@ -54,24 +81,6 @@ public static class CoreCombatSceneSetup
             aimController.shoulder = shoulder;
             if (shoulder == null)
                 Debug.LogWarning("Player 아래에서 Shoulder를 못 찾았습니다. PlayerAimController.shoulder를 직접 연결해주세요.");
-        }
-
-        var weaponTransform = player.transform.Find("Weapon");
-        GameObject weaponObj;
-        if (weaponTransform == null)
-        {
-            weaponObj = new GameObject("Weapon");
-            weaponObj.transform.SetParent(player.transform, false);
-
-            var weaponController = weaponObj.AddComponent<WeaponController>();
-            weaponController.baseData = weaponStatsData;
-            weaponController.muzzle = grip != null ? grip : weaponObj.transform;
-            if (grip == null)
-                Debug.LogWarning("Player 아래에서 Grip을 못 찾아 Weapon 자신을 muzzle로 사용했습니다.");
-        }
-        else
-        {
-            weaponObj = weaponTransform.gameObject;
         }
 
         if (weaponObj.GetComponent<PlayerWeaponFireController>() == null)
