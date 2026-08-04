@@ -52,13 +52,14 @@ public class PlayerWeaponFireController : MonoBehaviour
         {
             float angle = (baseAngle + startAngle + i * weapon.Stats.spreadAngleDegrees) * Mathf.Deg2Rad;
             Vector2 fireDir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-
+            Debug.Log($"발사체 생성 : {combatContext}");
             var proj = Instantiate(projectilePrefab, weapon.muzzle.position, Quaternion.identity);
             proj.GetComponent<Projectile>().Init(
                 fireDir,
                 combatContext.EffectiveProjectileSpeed,
                 combatContext.EffectiveProjectileDamage,
-                weapon.Stats.projectileRange);
+                weapon.Stats.projectileRange,
+                combatContext.hitCollider);
         }
     }
 }
