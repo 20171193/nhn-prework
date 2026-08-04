@@ -1,9 +1,11 @@
+using Photon.Pun;
 using UnityEngine;
 
-// 네트워크와 무관한 싱글플레이 테스트용 이동. 코어 로직 검증이 끝나면
-// 이 스크립트 대신 네트워크 버전(NetworkPlayerController류)으로 교체한다.
+// WASD 이동. 로컬 소유(photonView.IsMine)일 때만 입력을 처리하고, 원격 플레이어는
+// PhotonTransformView가 동기화해주는 위치를 그대로 따라간다.
 [RequireComponent(typeof(PlayerCombatContext))]
-public class PlayerMovementController : MonoBehaviour
+[RequireComponent(typeof(PhotonView))]
+public class PlayerMovementController : MonoBehaviourPun
 {
     PlayerCombatContext combatContext;
 
@@ -14,6 +16,8 @@ public class PlayerMovementController : MonoBehaviour
 
     void Update()
     {
+        if (!photonView.IsMine) return;
+
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
         Vector2 dir = new Vector2(h, v).normalized;

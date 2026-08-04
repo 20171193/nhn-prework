@@ -1,9 +1,13 @@
+using Photon.Pun;
 using UnityEngine;
 
 // 마우스 좌표 기준 에임.
 // - Player 좌/우 판단만으로 Y 회전 결정: 0 = 좌측(초기 상태), 180 = 우측
 // - Shoulder는 Z 회전 -90~90으로 상하 조준각 표현
-public class PlayerAimController : MonoBehaviour
+// 로컬 소유(photonView.IsMine)일 때만 입력을 처리하고, 원격 플레이어는
+// PhotonTransformView(Player 루트/Shoulder)가 동기화해주는 회전을 그대로 따라간다.
+[RequireComponent(typeof(PhotonView))]
+public class PlayerAimController : MonoBehaviourPun
 {
     public Transform shoulder;
 
@@ -22,6 +26,8 @@ public class PlayerAimController : MonoBehaviour
 
     void Update()
     {
+        if (!photonView.IsMine) return;
+
         MouseWorldPosition = GetMouseWorldPosition();
         AimDirection = (Vector2)MouseWorldPosition - (Vector2)transform.position;
         ApplyFacing(AimDirection);

@@ -33,7 +33,7 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
     {
         int spawnIndex = (PhotonNetwork.LocalPlayer.ActorNumber - 1) % spawnPoints.Length;
         Vector3 spawnPos = spawnPoints[spawnIndex].position;
-        PhotonNetwork.Instantiate("NetworkPlayer", spawnPos, Quaternion.identity);
+        PhotonNetwork.Instantiate("Player", spawnPos, Quaternion.identity);
 
         SetStatus($"Room joined ({PhotonNetwork.CurrentRoom.PlayerCount}/{MaxPlayers})");
     }

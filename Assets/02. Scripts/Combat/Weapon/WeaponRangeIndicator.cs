@@ -1,9 +1,11 @@
 using System.Collections.Generic;
+using Photon.Pun;
 using UnityEngine;
 
 // 무기 사거리를 Muzzle에서 실제 발사 방향으로 항상 그려서 보여준다.
 // Gizmos는 에디터 Scene 뷰에서만 보이고 빌드에는 안 나오므로, LineRenderer로 그린다.
 // 발사체가 여러 개면(증강으로 늘어난 만큼) 부채꼴로 퍼지는 각 방향마다 선을 하나씩 그린다.
+// 내 조준선만 보여야 하므로, 네트워크 상 원격 플레이어(IsMine이 아님)면 아예 그리지 않는다.
 [RequireComponent(typeof(WeaponController))]
 [RequireComponent(typeof(LineRenderer))]
 public class WeaponRangeIndicator : MonoBehaviour
@@ -15,16 +17,23 @@ public class WeaponRangeIndicator : MonoBehaviour
     public Color lineColor = new Color(1f, 0f, 0f, 0.6f);
 
     WeaponController weapon;
+    PhotonView ownerPhotonView;
     readonly List<LineRenderer> lines = new List<LineRenderer>();
 
     void Awake()
     {
         weapon = GetComponent<WeaponController>();
-        lines.Add(GetComponent<LineRenderer>()); // 기본으로 붙어있는 LineRenderer를 0번 선으로 사용
+        ownerPhotonView = GetComponentInParent<PhotonView>();
+
+        var baseLine = GetComponent<LineRenderer>();
+        if (ownerPhotonView != null && !ownerPhotonView.IsMine)
+            baseLine.enabled = false;
+        lines.Add(baseLine); // 기본으로 붙어있는 LineRenderer를 0번 선으로 사용
     }
 
     void Update()
     {
+        if (ownerPhotonView != null && !ownerPhotonView.IsMine) return;
         if (aim == null || combatContext == null || weapon.muzzle == null) return;
 
         Vector3 start = weapon.muzzle.position;
