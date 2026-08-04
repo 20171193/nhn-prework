@@ -19,6 +19,16 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
         PhotonNetwork.SerializationRate = 20;
         PhotonNetwork.SendRate = 30;
 
+        // 매치메이킹 씬(MatchmakingManager)을 거쳐 들어오면 이미 방에 들어와 있는 상태로
+        // 이 씬이 로드된다. 씬 로드로 진입한 경우 OnJoinedRoom이 다시 오지 않으므로
+        // 접속 절차를 건너뛰고 여기서 바로 스폰한다.
+        if (PhotonNetwork.InRoom)
+        {
+            SpawnLocalPlayer();
+            return;
+        }
+
+        // 이 씬을 단독으로 실행한 경우(매치메이킹 없이 테스트) 고정 방으로 직접 붙는다.
         SetStatus("Connecting...");
         PhotonNetwork.ConnectUsingSettings();
     }
@@ -30,6 +40,11 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
     }
 
     public override void OnJoinedRoom()
+    {
+        SpawnLocalPlayer();
+    }
+
+    void SpawnLocalPlayer()
     {
         int spawnIndex = (PhotonNetwork.LocalPlayer.ActorNumber - 1) % spawnPoints.Length;
         Vector3 spawnPos = spawnPoints[spawnIndex].position;
