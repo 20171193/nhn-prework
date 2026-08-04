@@ -40,19 +40,18 @@ public class PlayerWeaponFireController : MonoBehaviour
     {
         if (projectilePrefab == null || aim == null) return;
 
-        Vector2 direction = aim.AimDirection;
+        // Shoulder는 Player 원점 기준 각도로 회전하지만, 실제 탄도는 Muzzle이 Shoulder보다
+        // 아래에 있는 만큼 어긋난다. 그래서 발사 방향은 aim.AimDirection이 아니라
+        // Muzzle -> 마우스 월드 좌표로 다시 계산해 커서를 정확히 겨냥하게 한다.
+        Vector2 direction = (Vector2)aim.MouseWorldPosition - (Vector2)weapon.muzzle.position;
         if (direction.sqrMagnitude < 0.0001f) return;
         direction.Normalize();
 
         int count = combatContext.EffectiveProjectileCount;
-        float baseAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        float startAngle = -(count - 1) * weapon.Stats.spreadAngleDegrees / 2f;
 
         for (int i = 0; i < count; i++)
         {
-            float angle = (baseAngle + startAngle + i * weapon.Stats.spreadAngleDegrees) * Mathf.Deg2Rad;
-            Vector2 fireDir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-            Debug.Log($"발사체 생성 : {combatContext}");
+            Vector2 fireDir = FanSpread.GetDirection(direction, i, weapon.Stats.spreadAngleDegrees);
             var proj = Instantiate(projectilePrefab, weapon.muzzle.position, Quaternion.identity);
             proj.GetComponent<Projectile>().Init(
                 fireDir,

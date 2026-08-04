@@ -16,4 +16,5 @@ MonoBehaviour:
   projectileRange: 10
   projectileCount: 1
   attackRate: 2
+  spreadAngleDegrees: 8
   projectileStats: {fileID: 11400000, guid: 5a2647be1c096c94c99b64f9e8a9dea6, type: 2}

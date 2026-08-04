@@ -7,7 +7,11 @@ public class PlayerAimController : MonoBehaviour
 {
     public Transform shoulder;
 
+    // Player 원점 기준 방향 - Shoulder 회전(시각적 팔 움직임)에만 쓴다.
     public Vector2 AimDirection { get; private set; }
+    // 실제 마우스 월드 좌표 - Muzzle 등 실제 발사 방향 계산은 이 값을 기준으로 해야
+    // Shoulder/Muzzle 오프셋과 무관하게 커서를 정확히 겨냥한다.
+    public Vector3 MouseWorldPosition { get; private set; }
 
     Camera cam;
 
@@ -18,22 +22,22 @@ public class PlayerAimController : MonoBehaviour
 
     void Update()
     {
-        AimDirection = GetMouseAimDirection();
+        MouseWorldPosition = GetMouseWorldPosition();
+        AimDirection = (Vector2)MouseWorldPosition - (Vector2)transform.position;
         ApplyFacing(AimDirection);
         ApplyShoulderAngle(AimDirection);
     }
 
-    Vector2 GetMouseAimDirection()
+    Vector3 GetMouseWorldPosition()
     {
         Vector3 screenPoint = Input.mousePosition;
         screenPoint.z = transform.position.z - cam.transform.position.z;
-        Vector3 mouseWorld = cam.ScreenToWorldPoint(screenPoint);
-        return (Vector2)mouseWorld - (Vector2)transform.position;
+        return cam.ScreenToWorldPoint(screenPoint);
     }
 
     void ApplyFacing(Vector2 aimDir)
     {
-        float facingY = aimDir.x < 0f ? 0f : 180f;
+        float facingY = aimDir.x < 0f ? 180f : 0f;
         transform.rotation = Quaternion.Euler(0f, facingY, 0f);
     }
 
@@ -43,6 +47,6 @@ public class PlayerAimController : MonoBehaviour
 
         // atan2(y, |x|)는 항상 -90~90 범위 -> 좌/우 반전과 무관하게 상하 조준각만 표현
         float angle = Mathf.Atan2(aimDir.y, Mathf.Abs(aimDir.x)) * Mathf.Rad2Deg;
-        shoulder.localRotation = Quaternion.Euler(0f, 0f, -angle);
+        shoulder.localRotation = Quaternion.Euler(0f, 0f, angle);
     }
 }

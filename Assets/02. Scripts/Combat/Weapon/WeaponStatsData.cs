@@ -14,7 +14,7 @@ public class WeaponStatsData : ScriptableObject
     public float projectileRange = 10f;
     public int projectileCount = 1;
     public float attackRate = 2f; // 초당 발사 횟수 (공격 후 다음 공격까지 딜레이의 역수)
-    public float spreadAngleDegrees = 15f; // 발사체가 여러 개일 때 부채꼴로 벌어지는 간격
+    public float spreadAngleDegrees = 8f; // 발사체가 여러 개일 때 부채꼴로 벌어지는 간격
 
     public ProjectileStatsData projectileStats;
 }
