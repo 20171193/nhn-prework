@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f94cbb9e4b30ffb449c9bf2732018bf5, type: 3}
+  m_Name: Marksman
+  m_EditorClassIdentifier: 
+  augmentName: "\uC800\uACA9\uC218"
+  description: "\uB370\uBBF8\uC9C0 x2, \uBC1C\uC0AC\uCCB4 \uC18D\uB3C4 x1.5. \uB300\uC2E0
+    \uACF5\uACA9 \uC18D\uB3C4 x0.6"
+  tier: 2
+  modifiers:
+  - statType: 3
+    operation: 1
+    value: 2
+  - statType: 2
+    operation: 1
+    value: 1.5
+  - statType: 1
+    operation: 1
+    value: 0.6
