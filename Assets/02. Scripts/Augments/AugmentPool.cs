@@ -48,7 +48,9 @@ public class AugmentPool
         return pool.Count - 1;
     }
 
-    static float WeightOf(AugmentTier tier)
+    // 카탈로그 인스펙터가 티어별 뽑기 비중을 표시할 때도 이 값을 쓴다.
+    // 밸런스를 여기서 바꾸면 인스펙터 표시도 같이 따라간다.
+    public static float WeightOf(AugmentTier tier)
     {
         switch (tier)
         {
