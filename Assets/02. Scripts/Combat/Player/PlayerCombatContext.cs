@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Photon.Pun;
 using UnityEngine;
 
 // 증강 시스템이 실제로 붙는 지점. PlayerStats/WeaponStats/ProjectileStats의
@@ -7,8 +8,14 @@ using UnityEngine;
 // 스탯이 바뀔 수 있는 시점은 "증강 선택" 하나뿐이므로(전투 중에는 base도
 // modifier도 변하지 않음) 매 프레임 재계산하지 않고, 그 시점에만 미리 계산해
 // Effective* 값으로 캐싱해둔다. 이동/조준/발사 등 실제 로직은 이 값을 그대로 읽어서 쓴다.
-public class PlayerCombatContext : MonoBehaviour
+//
+// 발사 자체는 RPC로 전파한다 - PhotonView가 이 오브젝트(Player 루트)에 있어서
+// RPC 수신([PunRPC])도 여기 있어야 한다. Projectile은 더 이상 네트워크 오브젝트가
+// 아니라 각 클라이언트가 RPC를 받아 로컬로 직접 생성한다.
+public class PlayerCombatContext : MonoBehaviourPun
 {
+    const string ProjectilePrefabName = "Projectile";
+
     public PlayerStatsController playerStatsController;
     public WeaponController weaponController;
     public Collider2D hitCollider; // 이 플레이어를 맞힐 수 있는 콜라이더. 자신이 쏜 발사체가 이걸 무시하도록 넘겨줄 때 씀
@@ -28,6 +35,25 @@ public class PlayerCombatContext : MonoBehaviour
     void Start()
     {
         Recalculate();
+    }
+
+    public void FireVolley(Vector3 muzzlePosition, float[] payload)
+    {
+        photonView.RPC(nameof(RpcFireVolley), RpcTarget.All, muzzlePosition, payload);
+    }
+
+    [PunRPC]
+    void RpcFireVolley(Vector3 muzzlePosition, float[] payload)
+    {
+        ProjectileVolleyData.Unpack(payload, out float speed, out float damage, out float range, out Vector2[] directions);
+
+        var prefab = Resources.Load<GameObject>(ProjectilePrefabName);
+
+        foreach (var dir in directions)
+        {
+            var proj = Instantiate(prefab, muzzlePosition, Quaternion.identity);
+            proj.GetComponent<Projectile>().Init(dir, speed, damage, range, hitCollider);
+        }
     }
 
     // 증강 선택 UI(증강 개발자 쪽)가 플레이어가 고른 증강을 최종 확정할 때 호출하는 지점.

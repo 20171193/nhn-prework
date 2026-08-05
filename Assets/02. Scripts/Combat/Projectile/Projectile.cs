@@ -2,44 +2,18 @@ using Photon.Pun;
 using UnityEngine;
 
 // 직선(Straight) 궤적 발사체. 사거리(range)만큼 이동하면 스스로 사라진다.
-// 피격 판정은 맞은 대상 본인의 클라이언트가 내린다(지연 없는 자기 위치 기준이 정확함).
-// 네트워크로는 발사 하나(발사체 여러 개 포함)당 한 번만 생성되고, 이 인스턴스가 0번을
-// 맡고 나머지는 로컬로 복제한다 - 개별 발사체는 위치 동기화도 소유권도 필요 없다.
-[RequireComponent(typeof(PhotonView))]
-public class Projectile : MonoBehaviourPun, IPunInstantiateMagicCallback
+// 완전히 로컬(비-네트워크) 오브젝트다 - 발사는 RPC로 전파되고, 각 클라이언트가
+// 이 프리팹을 직접 Instantiate + Init해서 만든다. 피격 판정은 맞은 대상 본인의
+// 클라이언트가 내린다(지연 없는 자기 위치 기준이 정확함).
+public class Projectile : MonoBehaviour
 {
-    const string ProjectilePrefabName = "Projectile";
-
     Vector2 direction;
     float speed;
     float damage;
     float maxRange;
     Vector3 spawnPosition;
 
-    public void OnPhotonInstantiate(PhotonMessageInfo info)
-    {
-        var payload = (float[])photonView.InstantiationData[0];
-        ProjectileVolleyData.Unpack(payload, out float spd, out float dmg, out float range, out int ownerViewId, out Vector2[] directions);
-
-        var ownerView = PhotonView.Find(ownerViewId);
-        var ownerCollider = ownerView != null ? ownerView.GetComponent<Collider2D>() : null;
-        var prefab = Resources.Load<GameObject>(ProjectilePrefabName);
-
-        for (int i = 0; i < directions.Length; i++)
-        {
-            if (i == 0)
-            {
-                Init(directions[i], spd, dmg, range, ownerCollider);
-            }
-            else
-            {
-                var clone = Instantiate(prefab, transform.position, Quaternion.identity);
-                clone.GetComponent<Projectile>().Init(directions[i], spd, dmg, range, ownerCollider);
-            }
-        }
-    }
-
-    void Init(Vector2 dir, float speed, float damage, float range, Collider2D ownerCollider)
+    public void Init(Vector2 dir, float speed, float damage, float range, Collider2D ownerCollider)
     {
         direction = dir.normalized;
         this.speed = speed;

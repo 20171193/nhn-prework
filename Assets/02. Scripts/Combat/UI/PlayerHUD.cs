@@ -14,7 +14,6 @@ public class PlayerHUD : MonoBehaviour
     [SerializeField] private Image profileIMG;
     [SerializeField] private Slider hpSlider;
     [SerializeField] private TextMeshProUGUI nameTXT;
-    [SerializeField] private Sprite[] profileIcons;
 
     // 증강을 고르는 버튼이 아니라, 이미 획득한 증강을 아이콘으로 보여주고
     // 클릭하면 툴팁으로 설명을 보여주는 슬롯이다. 실제 선택 UI는 증강 개발자가 별도로 만든다.
@@ -27,8 +26,6 @@ public class PlayerHUD : MonoBehaviour
     public void Init(PlayerInfo info, PlayerStatsController stats, PlayerCombatContext context)
     {
         nameTXT.text = info.playerName;
-        if (info.profileIconId >= 0 && info.profileIconId < profileIcons.Length)
-            profileIMG.sprite = profileIcons[info.profileIconId];
 
         statsController = stats;
         statsController.OnHpChanged += UpdateHpBar;

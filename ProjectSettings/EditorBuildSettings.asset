@@ -5,13 +5,13 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/01. Scenes/Matchmaking.unity
     guid: 5142cf238ff61cd4b8a7ab9b308b978d
   - enabled: 1
     path: Assets/01. Scenes/Combat/Network_Prototype.unity
     guid: ea35cc98123a573409e118564b3da6b9
-  - enabled: 1
+  - enabled: 0
     path: Assets/01. Scenes/GameFlow_Test.unity
     guid: e98e32b5506620e46bdb3fa693cab66b
   m_configObjects: {}
