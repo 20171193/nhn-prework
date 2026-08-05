@@ -1,13 +1,11 @@
 using Photon.Pun;
 using UnityEngine;
 
-// 좌클릭으로 에임 방향에 발사체를 쏜다. 발사체 여러 개는 한 번의 PhotonNetwork.Instantiate로 묶어서 보낸다.
+// 좌클릭으로 에임 방향에 발사체를 쏜다. 발사체 여러 개를 한 번의 RPC로 묶어서 전파한다.
 [RequireComponent(typeof(WeaponController))]
 public class PlayerWeaponFireController : MonoBehaviour
 {
     public PlayerAimController aim;
-
-    const string ProjectilePrefabName = "Projectile";
 
     WeaponController weapon;
     PlayerCombatContext combatContext;
@@ -44,7 +42,6 @@ public class PlayerWeaponFireController : MonoBehaviour
         direction.Normalize();
 
         int count = combatContext.EffectiveProjectileCount;
-        int ownerViewId = ownerPhotonView != null ? ownerPhotonView.ViewID : -1;
 
         var directions = new Vector2[count];
         for (int i = 0; i < count; i++)
@@ -54,9 +51,8 @@ public class PlayerWeaponFireController : MonoBehaviour
             combatContext.EffectiveProjectileSpeed,
             combatContext.EffectiveProjectileDamage,
             weapon.Stats.projectileRange,
-            ownerViewId,
             directions);
 
-        PhotonNetwork.Instantiate(ProjectilePrefabName, weapon.muzzle.position, Quaternion.identity, 0, new object[] { payload });
+        combatContext.FireVolley(weapon.muzzle.position, payload);
     }
 }

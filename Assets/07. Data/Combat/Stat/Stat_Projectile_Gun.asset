@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 01d0602942dd07047a6b2b324bdc1587, type: 3}
-  m_Name: ProjectileStatsData_Default
+  m_Name: Stat_Projectile_Gun
   m_EditorClassIdentifier: 
   damage: 10
   speed: 12

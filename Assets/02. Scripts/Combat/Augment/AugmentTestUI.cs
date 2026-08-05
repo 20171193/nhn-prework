@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using Photon.Pun;
 using TMPro;
 using UnityEngine;
 
@@ -9,6 +10,10 @@ using UnityEngine;
 // 이 UI 자체가 "증강 하나"가 아니라 여러 증강을 자유롭게 테스트하는 도구이기 때문.
 // selectedAugmentsText는 나중에 네트워크 연동 시 "내 증강" 패널이 되고,
 // 같은 방식으로 텍스트 패널 하나를 더 두면 "상대 증강" 표시도 그대로 재사용 가능하다.
+//
+// Player가 PhotonNetwork.Instantiate로 런타임에 스폰되면서 씬에 미리 배치해둔
+// Player를 인스펙터에서 정적으로 연결하는 방식이 더 이상 유효하지 않다. 그래서
+// combatContext가 비어있으면 스폰된 오브젝트 중 로컬 소유(IsMine) Player를 찾아 채운다.
 public class AugmentTestUI : MonoBehaviour
 {
     public PlayerCombatContext combatContext;
@@ -20,7 +25,21 @@ public class AugmentTestUI : MonoBehaviour
 
     void Update()
     {
+        if (combatContext == null) FindLocalCombatContext();
         RefreshStatsDisplay();
+    }
+
+    void FindLocalCombatContext()
+    {
+        foreach (var ctx in FindObjectsByType<PlayerCombatContext>(FindObjectsSortMode.None))
+        {
+            var view = ctx.GetComponent<PhotonView>();
+            if (view != null && view.IsMine)
+            {
+                combatContext = ctx;
+                break;
+            }
+        }
     }
 
     void RefreshStatsDisplay()
@@ -57,6 +76,8 @@ public class AugmentTestUI : MonoBehaviour
 
     void Apply(string label, StatModifier modifier)
     {
+        if (combatContext == null) return; // 아직 로컬 Player가 스폰되지 않음
+
         combatContext.AddModifier(modifier);
 
         if (!augmentCounts.ContainsKey(label))
