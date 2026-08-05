@@ -1,10 +1,13 @@
-using System.Collections.Generic;
 using Photon.Pun;
 using UnityEngine;
 
 // 무기 사거리를 Muzzle에서 실제 발사 방향으로 항상 그려서 보여준다.
 // Gizmos는 에디터 Scene 뷰에서만 보이고 빌드에는 안 나오므로, LineRenderer로 그린다.
-// 발사체가 여러 개면(증강으로 늘어난 만큼) 부채꼴로 퍼지는 각 방향마다 선을 하나씩 그린다.
+// 0번(항상 존재하는 첫 발사체)은 인스펙터에 원래 붙어있는 LineRenderer 색 그대로 두고,
+// 증강으로 늘어난 나머지 발사체들은 별도 LineRenderer + extraLineColor로 구분해서 보여준다.
+// 발사체가 여러 개면 각 LineRenderer의 포인트 개수를 늘려서 (start, end0, start, end1, ...)
+// 순서로 찍는다. 모든 발사체가 같은 지점(Muzzle)에서 나가므로 "되돌아가는" 구간은 방금
+// 그린 선을 그대로 되짚어 겹치기만 하고, 결과적으로 광선 여러 개를 그린 것처럼 보인다.
 // 내 조준선만 보여야 하므로, 네트워크 상 원격 플레이어(IsMine이 아님)면 아예 그리지 않는다.
 [RequireComponent(typeof(WeaponController))]
 [RequireComponent(typeof(LineRenderer))]
@@ -12,23 +15,43 @@ public class WeaponRangeIndicator : MonoBehaviour
 {
     public PlayerAimController aim;
     public PlayerCombatContext combatContext;
-    public Material lineMaterial;
-    public float lineWidth = 0.05f;
-    public Color lineColor = new Color(1f, 0f, 0f, 0.6f);
+    public Color extraLineColor = new Color(1f, 0.6f, 0f, 0.6f);
 
     WeaponController weapon;
     PhotonView ownerPhotonView;
-    readonly List<LineRenderer> lines = new List<LineRenderer>();
+    LineRenderer baseLine;  // 0번 발사체 전용, 인스펙터 설정 색 그대로
+    LineRenderer extraLine; // 1번 이후(증강으로 추가된) 발사체 전용
 
     void Awake()
     {
         weapon = GetComponent<WeaponController>();
         ownerPhotonView = GetComponentInParent<PhotonView>();
+        baseLine = GetComponent<LineRenderer>();
+        extraLine = CreateExtraLine();
 
-        var baseLine = GetComponent<LineRenderer>();
         if (ownerPhotonView != null && !ownerPhotonView.IsMine)
+        {
             baseLine.enabled = false;
-        lines.Add(baseLine); // 기본으로 붙어있는 LineRenderer를 0번 선으로 사용
+            extraLine.enabled = false;
+        }
+    }
+
+    LineRenderer CreateExtraLine()
+    {
+        var obj = new GameObject("ExtraRangeLines");
+        obj.transform.SetParent(transform, false);
+
+        var extra = obj.AddComponent<LineRenderer>();
+        extra.positionCount = 0;
+        extra.useWorldSpace = true;
+        extra.startWidth = baseLine.startWidth;
+        extra.endWidth = baseLine.endWidth;
+        extra.numCapVertices = baseLine.numCapVertices;
+        extra.material = baseLine.material;
+        extra.startColor = extraLineColor;
+        extra.endColor = extraLineColor;
+
+        return extra;
     }
 
     void Update()
@@ -44,42 +67,23 @@ public class WeaponRangeIndicator : MonoBehaviour
         direction = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector2.right;
 
         int count = combatContext.EffectiveProjectileCount;
-        EnsureLineCount(count);
+        float spread = weapon.Stats.spreadAngleDegrees;
+        float range = weapon.Stats.projectileRange;
 
-        for (int i = 0; i < count; i++)
+        Vector2 baseDir = FanSpread.GetDirection(direction, 0, spread);
+        baseLine.positionCount = 2;
+        baseLine.SetPosition(0, start);
+        baseLine.SetPosition(1, start + (Vector3)(baseDir * range));
+
+        int extraCount = Mathf.Max(0, count - 1);
+        extraLine.positionCount = extraCount * 2;
+        for (int i = 0; i < extraCount; i++)
         {
-            Vector2 fireDir = FanSpread.GetDirection(direction, i, weapon.Stats.spreadAngleDegrees);
-            Vector3 end = start + (Vector3)(fireDir * weapon.Stats.projectileRange);
+            Vector2 fireDir = FanSpread.GetDirection(direction, i + 1, spread);
+            Vector3 end = start + (Vector3)(fireDir * range);
 
-            lines[i].SetPosition(0, start);
-            lines[i].SetPosition(1, end);
+            extraLine.SetPosition(i * 2, start);
+            extraLine.SetPosition(i * 2 + 1, end);
         }
-    }
-
-    void EnsureLineCount(int count)
-    {
-        while (lines.Count < count)
-            lines.Add(CreateLine(lines.Count));
-
-        for (int i = 0; i < lines.Count; i++)
-            lines[i].enabled = i < count;
-    }
-
-    LineRenderer CreateLine(int index)
-    {
-        var obj = new GameObject($"RangeLine_{index}");
-        obj.transform.SetParent(transform, false);
-
-        var line = obj.AddComponent<LineRenderer>();
-        line.positionCount = 2;
-        line.useWorldSpace = true;
-        line.startWidth = lineWidth;
-        line.endWidth = lineWidth;
-        line.numCapVertices = 4;
-        line.material = lineMaterial;
-        line.startColor = lineColor;
-        line.endColor = lineColor;
-
-        return line;
     }
 }

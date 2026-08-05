@@ -186,7 +186,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c6695d0619582b49a9da10c6dc87fd7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseData: {fileID: 11400000, guid: f0cd783a7142bde4a8cdad4b5306bc8f, type: 2}
+  baseData: {fileID: 11400000, guid: 3d3c5bf736d3fc1458aa3fcde968a289, type: 2}
   muzzle: {fileID: 7465643429901349412}
 --- !u!114 &1119990463249742332
 MonoBehaviour:
@@ -328,9 +328,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   aim: {fileID: 8460393214630880198}
   combatContext: {fileID: 5830825097330137817}
-  lineMaterial: {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
-  lineWidth: 0.05
-  lineColor: {r: 1, g: 0, b: 0, a: 0.039215688}
+  extraLineColor: {r: 0, g: 0.037346363, b: 1, a: 0.6}
 --- !u!1 &983905398282446574
 GameObject:
   m_ObjectHideFlags: 0
@@ -605,7 +603,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eae6d1c6e32455f4793a886914f9c47e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseData: {fileID: 11400000, guid: 0423233db0249a440852edcecfaf223b, type: 2}
+  baseData: {fileID: 11400000, guid: f30df04b666b38341bf11788faa0a771, type: 2}
 --- !u!114 &3552072437418502413
 MonoBehaviour:
   m_ObjectHideFlags: 0
