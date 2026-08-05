@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 
 // 증강 선택 화면. Show로 열고, 카드를 고르거나 제한 시간이 끝나면 닫힌다.
@@ -19,7 +18,7 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
 {
     public Canvas panel;
     public List<AugmentCardUI> cards;
-    public TMP_Text timerText;
+    public RopeTimerUI ropeTimer;
 
     AugmentManager manager;
     Action<AugmentData> onChosen;
@@ -93,15 +92,17 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
         card.SetRerollAvailable(false);
     }
 
+    // 남은 시간은 로프가 양쪽에서 타들어가는 길이로 보여준다.
+    // duration이 0이면 반복문을 아예 돌지 않으므로 0으로 나눌 일은 없다.
     private IEnumerator Countdown(float duration)
     {
         for (float left = duration; left > 0f; left -= Time.deltaTime)
         {
-            timerText.text = Mathf.CeilToInt(left).ToString();
+            ropeTimer.SetProgress(left / duration);
             yield return null;
         }
 
-        timerText.text = "0";
+        ropeTimer.SetProgress(0f);
         Choose(UnityEngine.Random.Range(0, manager.Offers.Count));
     }
 
