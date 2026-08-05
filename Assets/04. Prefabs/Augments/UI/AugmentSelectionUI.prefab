@@ -67,8 +67,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Choose an Augment
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: bd9956694d6fdf744ba114e5420827d0, type: 2}
+  m_sharedMaterial: {fileID: 2499203509268922098, guid: bd9956694d6fdf744ba114e5420827d0, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -307,8 +307,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 0
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: bd9956694d6fdf744ba114e5420827d0, type: 2}
+  m_sharedMaterial: {fileID: 2499203509268922098, guid: bd9956694d6fdf744ba114e5420827d0, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -425,7 +425,6 @@ MonoBehaviour:
   - {fileID: 2698935019575569937}
   - {fileID: 5277799302355969163}
   timerText: {fileID: 3713221100240020324}
-  duration: 15
 --- !u!1001 &2204611251240697009
 PrefabInstance:
   m_ObjectHideFlags: 0
