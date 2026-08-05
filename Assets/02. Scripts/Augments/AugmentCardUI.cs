@@ -44,6 +44,17 @@ public class AugmentCardUI : MonoBehaviour, IPointerDownHandler
         flipping = StartCoroutine(FlipRoutine(!showingFront));
     }
 
+    // 연출 없이 뒷면으로 되돌린다. 라운드가 새로 시작될 때 카드를 다시 뒤집어 보여주려면
+    // 지난 라운드에 앞면으로 남아 있던 상태를 먼저 지워야 한다.
+    public void ResetToBack()
+    {
+        if (flipping != null) StopCoroutine(flipping);
+        flipping = null;
+
+        SetAngle(0f);
+        ShowFront(false);
+    }
+
     private IEnumerator FlipRoutine(bool toFront)
     {
         yield return Rotate(0f, 90f);
