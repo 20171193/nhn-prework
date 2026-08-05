@@ -23,7 +23,7 @@ public class PlayerCombatContext : MonoBehaviour
 
     // 실제로 획득에 성공한 증강 하나를 UI(HUD 등)에 알린다. PlayerCombatContext는
     // 누가 듣는지 모르고, HUD 쪽이 이 이벤트를 구독해서 아이콘을 채운다.
-    public event Action<AugmentDefinition> OnAugmentAcquired;
+    public event Action<AugmentData> OnAugmentAcquired;
 
     void Start()
     {
@@ -31,7 +31,7 @@ public class PlayerCombatContext : MonoBehaviour
     }
 
     // 증강 선택 UI(증강 개발자 쪽)가 플레이어가 고른 증강을 최종 확정할 때 호출하는 지점.
-    public void ApplyAugment(AugmentDefinition augment)
+    public void ApplyAugment(AugmentData augment)
     {
         augment.Apply(this);
         OnAugmentAcquired?.Invoke(augment);

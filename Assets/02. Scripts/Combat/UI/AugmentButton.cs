@@ -23,9 +23,9 @@ public class AugmentButton : MonoBehaviour
     }
 
     // 매개변수로 증강 정보받아오기(증강 풀 존재 시 id로 가져오기)
-    public void SetAugment(AugmentDefinition augment)
+    public void SetAugment(AugmentData augment)
     {
-        // todo: augmentIMG/설명 등 augment.displayName, augment.description으로 채우기
+        // todo: augmentIMG/설명 등 augment.augmentName, augment.description으로 채우기
     }
 
     // 버튼 클릭 시 

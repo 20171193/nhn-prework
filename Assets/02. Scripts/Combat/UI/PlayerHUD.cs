@@ -51,7 +51,7 @@ public class PlayerHUD : MonoBehaviour
         hpSlider.value = maxHp > 0f ? currentHp / maxHp : 0f;
     }
 
-    void AddAcquiredAugmentIcon(AugmentDefinition augment)
+    void AddAcquiredAugmentIcon(AugmentData augment)
     {
         if (nextAugmentSlotIndex >= acquiredAugmentSlots.Length) return;
 
