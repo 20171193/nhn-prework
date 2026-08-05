@@ -104,3 +104,13 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# 더미 에셋 관리용 폴더 (git 추적 제외)
+/Assets/99. Imports/
+/Assets/99. Imports.meta
+
+# 개인별 VSCode 설정 (git 추적 제외)
+/.vscode/
+
+# Claude Code 로컬 작업 규칙 (git 추적 제외)
+/CLAUDE.md
