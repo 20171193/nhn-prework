@@ -27,6 +27,19 @@ public class AugmentManager
         return offers;
     }
 
+    // 슬롯 하나만 다시 뽑는다. 나머지 선택지와 겹치지 않게 뽑고, 바꾼 증강을 돌려준다.
+    // 풀에 새로 보여줄 게 없으면 null을 주고 기존 선택지를 그대로 둔다.
+    public AugmentData RerollAt(int index)
+    {
+        if (index < 0 || index >= offers.Count) return null;
+
+        var replacement = pool.DrawOne(offers);
+        if (replacement == null) return null;
+
+        offers[index] = replacement;
+        return replacement;
+    }
+
     public void ChooseAugment(AugmentData augment)
     {
         if (augment == null) return;

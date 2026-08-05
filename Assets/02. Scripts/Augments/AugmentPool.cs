@@ -29,6 +29,22 @@ public class AugmentPool
         return picked;
     }
 
+    // 리롤용. 지금 화면에 떠 있는 선택지를 빼고 하나만 더 뽑는다.
+    // 뽑아도 풀에서 빼지 않는 것은 Draw와 같다. 실제로 고른 것만 Remove로 빠진다.
+    // 보여줄 게 더 없으면 null을 준다 (풀이 거의 바닥난 마지막 라운드).
+    public AugmentData DrawOne(List<AugmentData> exclude)
+    {
+        var working = new List<AugmentData>(available.Count);
+        for (int i = 0; i < available.Count; i++)
+        {
+            if (exclude != null && exclude.Contains(available[i])) continue;
+            working.Add(available[i]);
+        }
+
+        if (working.Count == 0) return null;
+        return working[WeightedIndex(working)];
+    }
+
     public void Remove(AugmentData augment)
     {
         available.Remove(augment);

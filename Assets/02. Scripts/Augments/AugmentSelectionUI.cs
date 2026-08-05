@@ -57,12 +57,11 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
             cards[i].gameObject.SetActive(hasOffer);
             if (!hasOffer) continue;
 
-            // 지난 라운드에 앞면으로 남아 있던 카드를 뒷면으로 되돌린 뒤 뒤집어야
-            // 매 라운드 같은 연출이 나온다.
-            cards[i].ResetToBack();
+            // 뒤집기 연출 없이 앞면 그대로 띄운다.
+            // Init이 앞면 표시와 슬롯별 리롤 1회 충전까지 맡는다.
             cards[i].Init(offers[i]);
-            cards[i].Flip();
             cards[i].OnClick += OnAugmentSelected;
+            cards[i].OnReroll += OnCardReroll;
         }
 
         countdown = StartCoroutine(Countdown(duration));
@@ -79,6 +78,19 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
     {
         var index = cards.FindIndex(c => c == card);
         Choose(index);
+    }
+
+    // 슬롯 하나만 다시 뽑는다. 슬롯당 라운드에 한 번이라 성공하든 실패하든 여기서 소모한다.
+    // 남은 제한 시간은 그대로 간다 - 리롤로 시간을 벌 수 있으면 안 된다.
+    private void OnCardReroll(AugmentCardUI card)
+    {
+        var index = cards.FindIndex(c => c == card);
+        if (index < 0) return;
+
+        var replacement = manager.RerollAt(index);
+        if (replacement != null) card.SetAugment(replacement);
+
+        card.SetRerollAvailable(false);
     }
 
     private IEnumerator Countdown(float duration)
@@ -116,7 +128,10 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
         countdown = null;
 
         for (int i = 0; i < cards.Count; i++)
+        {
             cards[i].OnClick -= OnAugmentSelected;
+            cards[i].OnReroll -= OnCardReroll;
+        }
 
         panel.enabled = false;
     }
