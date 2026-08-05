@@ -46,20 +46,17 @@ public class PlayerWeaponFireController : MonoBehaviour
         int count = combatContext.EffectiveProjectileCount;
         int ownerViewId = ownerPhotonView != null ? ownerPhotonView.ViewID : -1;
 
-        var data = new object[5 + count * 2];
-        data[0] = combatContext.EffectiveProjectileSpeed;
-        data[1] = combatContext.EffectiveProjectileDamage;
-        data[2] = weapon.Stats.projectileRange;
-        data[3] = ownerViewId;
-        data[4] = count;
-
+        var directions = new Vector2[count];
         for (int i = 0; i < count; i++)
-        {
-            Vector2 fireDir = FanSpread.GetDirection(direction, i, weapon.Stats.spreadAngleDegrees);
-            data[5 + i * 2] = fireDir.x;
-            data[5 + i * 2 + 1] = fireDir.y;
-        }
+            directions[i] = FanSpread.GetDirection(direction, i, weapon.Stats.spreadAngleDegrees);
 
-        PhotonNetwork.Instantiate(ProjectilePrefabName, weapon.muzzle.position, Quaternion.identity, 0, data);
+        float[] payload = ProjectileVolleyData.Pack(
+            combatContext.EffectiveProjectileSpeed,
+            combatContext.EffectiveProjectileDamage,
+            weapon.Stats.projectileRange,
+            ownerViewId,
+            directions);
+
+        PhotonNetwork.Instantiate(ProjectilePrefabName, weapon.muzzle.position, Quaternion.identity, 0, new object[] { payload });
     }
 }

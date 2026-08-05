@@ -18,29 +18,23 @@ public class Projectile : MonoBehaviourPun, IPunInstantiateMagicCallback
 
     public void OnPhotonInstantiate(PhotonMessageInfo info)
     {
-        object[] data = photonView.InstantiationData;
-        float spd = (float)data[0];
-        float dmg = (float)data[1];
-        float range = (float)data[2];
-        int ownerViewId = (int)data[3];
-        int count = (int)data[4];
+        var payload = (float[])photonView.InstantiationData[0];
+        ProjectileVolleyData.Unpack(payload, out float spd, out float dmg, out float range, out int ownerViewId, out Vector2[] directions);
 
         var ownerView = PhotonView.Find(ownerViewId);
         var ownerCollider = ownerView != null ? ownerView.GetComponent<Collider2D>() : null;
         var prefab = Resources.Load<GameObject>(ProjectilePrefabName);
 
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < directions.Length; i++)
         {
-            var dir = new Vector2((float)data[5 + i * 2], (float)data[5 + i * 2 + 1]);
-
             if (i == 0)
             {
-                Init(dir, spd, dmg, range, ownerCollider);
+                Init(directions[i], spd, dmg, range, ownerCollider);
             }
             else
             {
                 var clone = Instantiate(prefab, transform.position, Quaternion.identity);
-                clone.GetComponent<Projectile>().Init(dir, spd, dmg, range, ownerCollider);
+                clone.GetComponent<Projectile>().Init(directions[i], spd, dmg, range, ownerCollider);
             }
         }
     }
