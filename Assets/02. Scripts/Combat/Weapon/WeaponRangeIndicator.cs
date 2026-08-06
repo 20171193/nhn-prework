@@ -15,43 +15,21 @@ public class WeaponRangeIndicator : MonoBehaviour
 {
     public PlayerAimController aim;
     public PlayerCombatContext combatContext;
-    public Color extraLineColor = new Color(1f, 0.6f, 0f, 0.6f);
 
-    WeaponController weapon;
-    PhotonView ownerPhotonView;
-    LineRenderer baseLine;  // 0번 발사체 전용, 인스펙터 설정 색 그대로
-    LineRenderer extraLine; // 1번 이후(증강으로 추가된) 발사체 전용
+    [SerializeField] WeaponController weapon;
+    [SerializeField] private PhotonView ownerPhotonView;
+    [SerializeField] private LineRenderer baseLine;  // 0번 발사체 전용, 인스펙터 설정 색 그대로
+    [SerializeField] private LineRenderer extraLine; // 1번 이후(증강으로 추가된) 발사체 전용
 
     void Awake()
     {
-        weapon = GetComponent<WeaponController>();
         ownerPhotonView = GetComponentInParent<PhotonView>();
-        baseLine = GetComponent<LineRenderer>();
-        extraLine = CreateExtraLine();
 
         if (ownerPhotonView != null && !ownerPhotonView.IsMine)
         {
             baseLine.enabled = false;
             extraLine.enabled = false;
         }
-    }
-
-    LineRenderer CreateExtraLine()
-    {
-        var obj = new GameObject("ExtraRangeLines");
-        obj.transform.SetParent(transform, false);
-
-        var extra = obj.AddComponent<LineRenderer>();
-        extra.positionCount = 0;
-        extra.useWorldSpace = true;
-        extra.startWidth = baseLine.startWidth;
-        extra.endWidth = baseLine.endWidth;
-        extra.numCapVertices = baseLine.numCapVertices;
-        extra.material = baseLine.material;
-        extra.startColor = extraLineColor;
-        extra.endColor = extraLineColor;
-
-        return extra;
     }
 
     void Update()
