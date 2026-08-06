@@ -30,4 +30,15 @@ public static class Bootstrap
         // static 클래스라 MonoBehaviour의 Instantiate를 쓸 수 없다.
         UnityEngine.Object.Instantiate(prefab);
     }
+
+    // 전투 데이터 DB(Weapon/Projectile/ThrowableWeapon)도 게임 시작 시 한 번만 Resources에서 불러
+    // static Instance에 캐싱해둔다. 인게임 중에 처음 발사/장착하는 순간 로딩 비용이
+    // 튀지 않도록, 실제로 쓰이기 훨씬 전인 부팅 시점에 미리 끝내두는 것.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    public static void InitializeCombatDatabases()
+    {
+        WeaponDatabase.EnsureLoaded();
+        ProjectileDatabase.EnsureLoaded();
+        ThrowableWeaponDatabase.EnsureLoaded();
+    }
 }

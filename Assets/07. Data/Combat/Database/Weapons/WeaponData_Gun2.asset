@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 957390b5516ced947ae08a4c76866f54, type: 3}
+  m_Name: WeaponData_Gun2
+  m_EditorClassIdentifier: 
+  id: 20002
+  trajectory: 0
+  projectileRange: 10
+  projectileCount: 1
+  attackRate: 2
+  spreadAngleDegrees: 8
+  projectileData: {fileID: 11400000, guid: 655b4a1bc7ee2944698932564c55c6db, type: 2}
+  prefab: {fileID: 8077907479858348566, guid: 765606afb84bb364fb9b1656c4f7be96, type: 3}
+  icon: {fileID: 0}

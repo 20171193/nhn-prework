@@ -9,12 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 957390b5516ced947ae08a4c76866f54, type: 3}
-  m_Name: Stat_Weapon_Gun
+  m_Script: {fileID: 11500000, guid: acaad3157a22ca84f8c47bb136b7ee14, type: 3}
+  m_Name: WeaponDatabase
   m_EditorClassIdentifier: 
-  trajectory: 0
-  projectileRange: 10
-  projectileCount: 1
-  attackRate: 2
-  spreadAngleDegrees: 1.5
-  projectileStats: {fileID: 11400000, guid: 6e6b61b38241a124091fb79c8d333a6c, type: 2}
+  entries:
+  - {fileID: 11400000, guid: 2d0970104ea19d94689c6e3a112debc1, type: 2}
+  - {fileID: 11400000, guid: b538e9fa82a90c546be9ebf615c02ec0, type: 2}

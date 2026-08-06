@@ -4,8 +4,9 @@ using UnityEngine;
 // 런타임 인스턴스를 만들고, 발사 위치(muzzle) 참조를 들고 있는다.
 public class WeaponController : MonoBehaviour
 {
-    public WeaponStatsData baseData;
+    public WeaponData baseData;
     public Transform muzzle;
+    public SpriteRenderer weaponSprite; // 투척무기 에임 중 숨길 대상
 
     public WeaponStats Stats { get; private set; }
     public ProjectileStats ProjectileStats { get; private set; }
@@ -13,6 +14,6 @@ public class WeaponController : MonoBehaviour
     void Awake()
     {
         Stats = new WeaponStats(baseData);
-        ProjectileStats = new ProjectileStats(baseData.projectileStats);
+        ProjectileStats = new ProjectileStats(baseData.projectileData);
     }
 }
