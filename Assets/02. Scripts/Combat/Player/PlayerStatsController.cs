@@ -17,6 +17,7 @@ public class PlayerStatsController : MonoBehaviourPun, IDamageable
 
     // 파라미터: (currentHp, maxHp)
     public event Action<float, float> OnHpChanged;
+    public event Action OnDeath;
 
     void Awake()
     {
@@ -38,5 +39,9 @@ public class PlayerStatsController : MonoBehaviourPun, IDamageable
 
         string who = photonView.IsMine ? "로컬 플레이어" : "상대방 플레이어";
         Debug.Log($"[피격] {who} 잔여 HP: {Stats.currentHp}/{Stats.maxHp}");
+
+        if(Stats.currentHp <= 0f)
+            OnDeath?.Invoke();
+        
     }
 }

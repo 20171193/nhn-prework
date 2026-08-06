@@ -39,6 +39,23 @@ public class PlayerCombatContext : MonoBehaviourPun
     // 누가 듣는지 모르고, HUD 쪽이 이 이벤트를 구독해서 아이콘을 채운다.
     public event Action<AugmentData> OnAugmentAcquired;
 
+    void OnEnable()
+    {
+        playerStatsController.OnDeath += HandleDeath;
+    }
+    void OnDisable()
+    {
+        playerStatsController.OnDeath -= HandleDeath;
+    }
+
+    void HandleDeath()
+    {
+        SetInputEnabled(false);
+        
+        // todo
+        // GameManager.Instance.OnPlayerDeath(photonView.Owner);
+    }
+
     void Start()
     {
         Recalculate();
@@ -67,13 +84,11 @@ public class PlayerCombatContext : MonoBehaviourPun
         augment.Apply(this);
         OnAugmentAcquired?.Invoke(augment);
     }
-
     public void AddModifier(StatModifier modifier)
     {
         modifiers.Add(modifier);
         Recalculate();
     }
-
     void Recalculate()
     {
         var playerStats = playerStatsController.Stats;
@@ -86,7 +101,6 @@ public class PlayerCombatContext : MonoBehaviourPun
         EffectiveProjectileDamage = Calculate(projectileStats.damage, StatType.ProjectileDamage);
         EffectiveProjectileCount = Mathf.Max(1, Mathf.RoundToInt(Calculate(weaponStats.projectileCount, StatType.ProjectileCount)));
     }
-
     float Calculate(float baseValue, StatType statType)
     {
         float sumOfAdds = 0f;
