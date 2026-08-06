@@ -312,6 +312,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   baseData: {fileID: 11400000, guid: 2d0970104ea19d94689c6e3a112debc1, type: 2}
   muzzle: {fileID: 2016897634961688011}
+  weaponSprite: {fileID: 7359835402204207511}
 --- !u!114 &8353403217876045331
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -324,7 +325,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5b962051cac32c43b4203aec8c32778, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  aim: {fileID: 0}
 --- !u!114 &2826081944555537916
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -337,8 +337,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61c959cae5534cd4492642c45c9a1667, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  aim: {fileID: 0}
-  combatContext: {fileID: 0}
   weapon: {fileID: 3723084016951323185}
   ownerPhotonView: {fileID: 0}
   baseLine: {fileID: 3117391292221487926}
