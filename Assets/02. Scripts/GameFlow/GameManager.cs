@@ -13,17 +13,20 @@ public enum GamePhase
     MatchOver       // 매치 종료
 }
 
-// 매치 한 판(3분 30초 전투 + 중간 증강 선택 3회)의 흐름을 관장한다.
+// 매치 한 판(3분 30초 전투 + 증강 선택 3회)의 흐름을 관장한다.
 //
-// 씬 진입 → 준비 → 전투 1분 → 증강 선택 → 전투 1분 → 증강 선택 → 전투 1분 → 증강 선택
-//         → 전투 30초 → 종료.
+// 씬 진입 → 준비 → 증강 선택 → 전투 1분 → 증강 선택 → 전투 1분 → 증강 선택
+//         → 전투 1분 30초 → 종료.
+//
+// 첫 증강은 전투가 시작되기 전에 고른다 - 빈손으로 첫 1분을 싸우지 않게 하기 위해서다.
+// 나머지는 전투 1분마다 끼어들고, 마지막 회차 뒤에는 남은 전투 시간을 통째로 쓴다.
 //
 // 승부는 사망으로 갈린다. 죽은 쪽이 마스터에게 보고하고, 마스터가 남은 사람을 승자로 정해
 // MatchOver 방송에 실어 보낸다(WinnerActorNumber). 제한 시간까지 아무도 죽지 않으면 무승부다.
 //
 // 매치 시계(MatchTimeLeft)는 전투 시간만 센다. 증강 선택 동안에는 멈춘다.
-// 그래서 전투 구간을 다 더하면 60+60+60+30 = 210초, 정확히 3분 30초가 된다.
-// 증강 선택이 전투 사이가 아니라 전투 도중에 끼어들므로, 그동안은 양쪽 조작을 막는다
+// 그래서 전투 구간을 다 더하면 60+60+90 = 210초, 정확히 3분 30초가 된다.
+// 증강 선택이 전투 도중에 끼어들므로, 그동안은 양쪽 조작을 막는다
 // (PlayerCombatContext.SetInputEnabled). 카드를 고르는 사람이 일방적으로 얻어맞으면 안 된다.
 //
 // 흐름의 주인은 마스터 클라이언트 한 명이다(GameFlowSync).
@@ -86,6 +89,8 @@ public class GameManager : Singleton<GameManager>
     public int WinnerActorNumber { get; private set; }
     // 내 ActorNumber. 결과 화면이 "내가 이겼는지"를 판단할 때 쓴다. 방 밖에서는 0.
     public int LocalActorNumber => sync.LocalActorNumber;
+    // 나 말고 다른 사람이 매치에 있는지. 증강을 고른 뒤 기다릴 상대가 있는지 판단할 때 쓴다.
+    public bool HasOpponent => sync.PlayerCount > 1;
 
     // 지금까지 띄운 증강 선택 횟수. 매치 시작 전에는 0.
     public int AugmentSelectionsOffered { get; private set; }
@@ -97,10 +102,13 @@ public class GameManager : Singleton<GameManager>
         Phase == GamePhase.Combat ? matchTimeLeftAfterPhase + RemainingTime() : matchTimeLeftAfterPhase;
 
     // 다음 증강 선택이 뜨는 순간의 MatchTimeLeft 값. 남은 전투 시간으로 시점을 표현한다.
-    private float NextSelectionAtMatchTime => matchDuration - (AugmentSelectionsOffered + 1) * augmentSelectInterval;
+    //
+    // n번째 선택은 전투를 (n-1)번 치른 뒤에 뜬다(첫 선택은 전투 전). 그래서 이미 띄운 횟수에
+    // 간격을 곱한 만큼만 줄어든 시점이 다음 선택 시점이다.
+    private float NextSelectionAtMatchTime => matchDuration - AugmentSelectionsOffered * augmentSelectInterval;
 
     // 아직 뜰 증강 선택이 남았는지. 횟수를 다 썼거나, 전투 시간이 모자라 다음 회차가
-    // 통째로 잘리는 경우(MatchPhases가 남은 시간 0에서 멈추는 것과 같은 조건)에 false다.
+    // 통째로 잘리는 경우(MatchPhases의 루프 조건과 같은 조건)에 false다.
     public bool HasNextAugmentSelect =>
         AugmentSelectionsOffered < augmentSelectCount && NextSelectionAtMatchTime > 0f;
 
@@ -335,8 +343,12 @@ public class GameManager : Singleton<GameManager>
         MatchEnded?.Invoke();
     }
 
-    // 전투 시간을 augmentSelectInterval 단위로 끊어가며 사이사이 증강 선택을 끼운다.
-    // 기본값(210초 / 3회 / 60초)이면 60-선택-60-선택-60-선택-30이 된다.
+    // 증강 선택을 먼저 띄우고 그다음 전투로 들어가는 것을 augmentSelectCount번 반복한다.
+    // 첫 증강은 준비 시간이 끝나자마자 뜬다 - 빈손으로 첫 1분을 싸우지 않게 하기 위해서다.
+    // 기본값(210초 / 3회 / 60초)이면 선택-60-선택-60-선택-90이 된다.
+    //
+    // 마지막 회차 뒤에는 남은 전투 시간을 통째로 쓴다. 여기서 간격만큼만 끊으면
+    // 전투가 두 구간으로 쪼개지기만 하고 그 사이에 아무 일도 일어나지 않는다.
     private IEnumerator MatchPhases()
     {
         float combatLeft = matchDuration;
@@ -344,22 +356,21 @@ public class GameManager : Singleton<GameManager>
         yield return RunPhase(GamePhase.Ready, readyDuration, combatLeft);
         if (isMatchEnding) yield break;
 
+        // 남은 전투 시간이 없으면 증강을 줘도 쓸 데가 없다. 그래서 조건이 루프 앞에 있다.
         for (int i = 1; i <= augmentSelectCount && combatLeft > 0f; i++)
         {
-            float segment = Mathf.Min(augmentSelectInterval, combatLeft);
+            yield return AugmentSelectPhase(i, combatLeft);
+            if (isMatchEnding) yield break;
+
+            bool lastSelection = i == augmentSelectCount;
+            float segment = lastSelection ? combatLeft : Mathf.Min(augmentSelectInterval, combatLeft);
             combatLeft -= segment;
 
             yield return RunPhase(GamePhase.Combat, segment, combatLeft);
             if (isMatchEnding) yield break;
-
-            // 남은 전투 시간이 없으면 증강을 줘도 쓸 데가 없다. 그대로 매치를 끝낸다.
-            if (combatLeft <= 0f) yield break;
-
-            yield return AugmentSelectPhase(i, combatLeft);
-            if (isMatchEnding) yield break;
         }
 
-        // 마지막 증강 선택 뒤에 남은 전투 시간(기본값이면 30초).
+        // 증강 선택이 0회이거나, 전투 시간이 모자라 도중에 루프를 빠져나온 경우.
         if (combatLeft > 0f)
             yield return RunPhase(GamePhase.Combat, combatLeft, 0f);
     }
@@ -378,10 +389,10 @@ public class GameManager : Singleton<GameManager>
         yield return WaitForPhaseEnd(() => selectionDone.Count >= sync.PlayerCount);
 
         if (isPlayerChoosingAugment)
-        {
             Debug.LogWarning("증강 선택 화면이 제한 시간 안에 응답하지 않아 그냥 넘어갑니다.", this);
-            CloseSelectionView();
-        }
+
+        // 이미 골라서 상대를 기다리던 경우에도 대기 표시를 걷어야 하므로 항상 부른다.
+        CloseSelectionView();
     }
 
     private IEnumerator RunPhase(GamePhase phase, float duration, float matchTimeLeftAfter)
@@ -560,10 +571,11 @@ public class GameManager : Singleton<GameManager>
         selectionView.Show(augmentManager, duration, OnAugmentChosen);
     }
 
+    // 증강 선택 구간을 벗어날 때 부른다.
+    // 아직 고르는 중인지와 상관없이 화면에 알려야 한다. 이미 고르고 "상대를 기다리는 중"을
+    // 띄워둔 상태에서 조건을 걸어 건너뛰면, 전투가 시작돼도 그 표시가 화면에 남는다.
     private void CloseSelectionView()
     {
-        if (!isPlayerChoosingAugment) return;
-
         isPlayerChoosingAugment = false;
         selectionView?.Hide();
     }

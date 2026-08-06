@@ -20,6 +20,11 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
     public List<AugmentCardUI> cards;
     public RopeTimerUI ropeTimer;
 
+    [Tooltip("내가 고른 뒤 상대를 기다리는 동안 띄울 오브젝트(\"상대가 증강을 고르는 중...\").\n" +
+             "panel 아래에 두면 안 된다 - 카드를 닫을 때 panel.enabled를 끄므로 같이 사라진다. " +
+             "panel과 형제로 두고 자체 Canvas를 갖게 하거나, 다른 Canvas 아래에 두어야 한다.")]
+    public GameObject waitingForOthersPanel;
+
     AugmentManager manager;
     Action<AugmentData> onChosen;
     Coroutine countdown;
@@ -27,6 +32,7 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
     private void Awake()
     {
         panel.enabled = false;
+        SetWaitingForOthers(false);
     }
 
     private void OnEnable()
@@ -47,6 +53,8 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
         this.onChosen = onChosen;
 
         panel.enabled = true;
+        // 지난 회차에 띄운 대기 표시를 걷어내고 새로 연다.
+        SetWaitingForOthers(false);
 
         var offers = manager.RollAugments(cards.Count);
         for (int i = 0; i < cards.Count; i++)
@@ -66,10 +74,12 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
         countdown = StartCoroutine(Countdown(duration));
     }
 
-    // 매치가 중단된 경우. 고른 것 없이 화면만 걷어낸다.
+    // 증강 선택 구간이 끝났다. 아직 고르지 않았다면 고른 것 없이 화면만 걷어내고,
+    // 이미 골라서 상대를 기다리는 중이었다면 그 대기 표시까지 같이 걷는다.
     public void Hide()
     {
         Close();
+        SetWaitingForOthers(false);
         onChosen = null;
     }
 
@@ -118,7 +128,22 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
         manager.ChooseAugment(chosen);
         Close();
 
+        // 내 선택은 끝났지만 단계는 상대가 고를 때까지 이어진다(GameManager가 양쪽 보고를 기다린다).
+        // 그동안 빈 화면만 남으면 멈춘 것처럼 보이므로 기다리는 중이라고 알려준다.
+        SetWaitingForOthers(HasOpponent());
+
         callback?.Invoke(chosen);
+    }
+
+    // 혼자면 기다릴 상대가 없다. 흐름 테스트 씬처럼 방 밖에서 도는 경우도 여기서 걸러진다.
+    private bool HasOpponent() => GameManager.Instance != null && GameManager.Instance.HasOpponent;
+
+    private void SetWaitingForOthers(bool waiting)
+    {
+        if (waitingForOthersPanel == null) return;
+        if (waitingForOthersPanel.activeSelf == waiting) return;
+
+        waitingForOthersPanel.SetActive(waiting);
     }
 
     // 화면을 닫고 카드 구독을 정리한다. 라운드마다 다시 열리므로 여기서 걷어내지 않으면
