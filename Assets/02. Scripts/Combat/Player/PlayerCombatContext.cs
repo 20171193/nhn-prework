@@ -35,6 +35,8 @@ public class PlayerCombatContext : MonoBehaviourPun
     // 그 사본의 이동/발사는 IsMine이 아니라 아무 일도 하지 않으므로 증강이 통째로 사라진다.
     void OnEnable()
     {
+        playerStatsController.OnDeath += HandleDeath;
+
         if (!photonView.IsMine) return;
 
         if (GameManager.Instance != null)
@@ -43,6 +45,8 @@ public class PlayerCombatContext : MonoBehaviourPun
 
     void OnDisable()
     {
+        playerStatsController.OnDeath -= HandleDeath;
+
         if (GameManager.Instance != null)
             GameManager.Instance.UnregisterLocalPlayer(this);
     }
@@ -59,15 +63,6 @@ public class PlayerCombatContext : MonoBehaviourPun
     // 실제로 획득에 성공한 증강 하나를 UI(HUD 등)에 알린다. PlayerCombatContext는
     // 누가 듣는지 모르고, HUD 쪽이 이 이벤트를 구독해서 아이콘을 채운다.
     public event Action<AugmentData> OnAugmentAcquired;
-
-    void OnEnable()
-    {
-        playerStatsController.OnDeath += HandleDeath;
-    }
-    void OnDisable()
-    {
-        playerStatsController.OnDeath -= HandleDeath;
-    }
 
     void HandleDeath()
     {
