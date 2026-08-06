@@ -10,14 +10,33 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
     const string RoomName = "CombatTest1v1";
     const byte MaxPlayers = 2;
 
+    public PlayerHUD playerHUD;
+    public PlayerHUD enemyHUD;
+
     public TMP_Text statusLabel;
     public Transform[] spawnPoints;
+
+    // 씬에 미리 배치된 HUD를 들고 있는 쪽이 이 매니저이므로, 런타임에 생성되는 Player 쪽이
+    // HUD를 찾아 헤매지 않고 여기로 스폰 완료만 알리면(ApplyPlayerSetup) 연결은 매니저가 한다.
+    public static CombatNetworkManager Instance { get; private set; }
+
+    void Awake()
+    {
+        Instance = this;
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
 
     void Start()
     {
         // 기본값(SerializationRate 10/s)은 위치 갱신이 뜸해서 원격 캐릭터가 눈에 띄게 뒤처져 보인다.
         PhotonNetwork.SerializationRate = 20;
         PhotonNetwork.SendRate = 30;
+
+        PlayerSetupSync.PublishLocal(LocalPlayerSetup.Current);
 
         // 매치메이킹 씬(MatchmakingManager)을 거쳐 들어오면 이미 방에 들어와 있는 상태로
         // 이 씬이 로드된다. 씬 로드로 진입한 경우 OnJoinedRoom이 다시 오지 않으므로
@@ -51,6 +70,26 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
         PhotonNetwork.Instantiate("Player", spawnPos, Quaternion.identity);
 
         SetStatus($"Room joined ({PhotonNetwork.CurrentRoom.PlayerCount}/{MaxPlayers})");
+    }
+
+    // Player 프리팹의 PlayerSetupApplier가 스폰 완료(Start) 시점에 호출한다.
+    // 소유권(IsMine)에 따라 미리 캐싱해둔 playerHUD/enemyHUD 중 하나에 세팅을 꽂아준다.
+    public void ApplyPlayerSetup(PhotonView playerView)
+    {
+        if (!PlayerSetupSync.TryRead(playerView.Owner, out var info))
+        {
+            Debug.LogWarning($"{playerView.Owner?.NickName}의 PlayerInfo를 CustomProperties에서 찾지 못했습니다.", this);
+            return;
+        }
+
+        var hud = playerView.IsMine ? playerHUD : enemyHUD;
+        if (hud == null)
+        {
+            Debug.LogWarning("연결할 HUD가 캐싱되어 있지 않습니다.", this);
+            return;
+        }
+
+        hud.Init(info, playerView.GetComponent<PlayerStatsController>(), playerView.GetComponent<PlayerCombatContext>());
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)

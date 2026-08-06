@@ -17,7 +17,6 @@ using UnityEngine;
 public class AugmentTestUI : MonoBehaviour
 {
     public PlayerCombatContext combatContext;
-    public TMP_Text statsText;
     public TMP_Text selectedAugmentsText;
 
     readonly List<string> augmentOrder = new List<string>();
@@ -26,7 +25,6 @@ public class AugmentTestUI : MonoBehaviour
     void Update()
     {
         if (combatContext == null) FindLocalCombatContext();
-        RefreshStatsDisplay();
     }
 
     void FindLocalCombatContext()
@@ -42,17 +40,6 @@ public class AugmentTestUI : MonoBehaviour
         }
     }
 
-    void RefreshStatsDisplay()
-    {
-        if (combatContext == null || statsText == null) return;
-
-        statsText.text =
-            $"Move Speed : {combatContext.EffectiveMoveSpeed:F1}\n" +
-            $"Attack Per Second : {combatContext.EffectiveAttackRate:F2}\n" +
-            $"Projectile Speed : {combatContext.EffectiveProjectileSpeed:F1}\n" +
-            $"Projectile Damage : {combatContext.EffectiveProjectileDamage:F1}\n" +
-            $"Projectile Count : {combatContext.EffectiveProjectileCount}";
-    }
 
     public void AddProjectileCount()
     {

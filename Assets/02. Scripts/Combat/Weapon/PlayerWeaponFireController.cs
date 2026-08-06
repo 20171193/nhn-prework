@@ -22,6 +22,7 @@ public class PlayerWeaponFireController : MonoBehaviour
     void Update()
     {
         if (ownerPhotonView != null && !ownerPhotonView.IsMine) return;
+        if (!combatContext.InputEnabled) return;
 
         fireTimer -= Time.deltaTime;
 

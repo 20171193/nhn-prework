@@ -16,7 +16,7 @@ public class PlayerMovementController : MonoBehaviourPun
 
     void Update()
     {
-        if (!photonView.IsMine) return;
+        if (!photonView.IsMine || !combatContext.InputEnabled) return;
 
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");

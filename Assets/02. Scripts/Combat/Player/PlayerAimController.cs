@@ -6,6 +6,7 @@ using UnityEngine;
 // - Shoulder는 Z 회전 -90~90으로 상하 조준각 표현
 // 로컬 소유(photonView.IsMine)일 때만 입력을 처리하고, 원격 플레이어는
 // PhotonTransformView(Player 루트/Shoulder)가 동기화해주는 회전을 그대로 따라간다.
+[RequireComponent(typeof(PlayerCombatContext))]
 [RequireComponent(typeof(PhotonView))]
 public class PlayerAimController : MonoBehaviourPun
 {
@@ -17,7 +18,13 @@ public class PlayerAimController : MonoBehaviourPun
     // Shoulder/Muzzle 오프셋과 무관하게 커서를 정확히 겨냥한다.
     public Vector3 MouseWorldPosition { get; private set; }
 
+    PlayerCombatContext combatContext;
     Camera cam;
+
+    void Awake()
+    {
+        combatContext = GetComponent<PlayerCombatContext>();
+    }
 
     void Start()
     {
@@ -26,7 +33,7 @@ public class PlayerAimController : MonoBehaviourPun
 
     void Update()
     {
-        if (!photonView.IsMine) return;
+        if (!photonView.IsMine || !combatContext.InputEnabled) return;
 
         MouseWorldPosition = GetMouseWorldPosition();
         AimDirection = (Vector2)MouseWorldPosition - (Vector2)transform.position;
