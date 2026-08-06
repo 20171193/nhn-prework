@@ -47,6 +47,15 @@ public class PlayerCombatContext : MonoBehaviourPun
             GameManager.Instance.UnregisterLocalPlayer(this);
     }
 
+    // 증강 선택 등 입력을 받으면 안 되는 구간에 GameManager(게임 플로우)가 끈다.
+    // Movement/Aim/Weapon 각 입력 컨트롤러가 Update에서 이 값을 확인한다.
+    public bool InputEnabled { get; private set; } = true;
+
+    public void SetInputEnabled(bool enabled)
+    {
+        InputEnabled = enabled;
+    }
+
     // 실제로 획득에 성공한 증강 하나를 UI(HUD 등)에 알린다. PlayerCombatContext는
     // 누가 듣는지 모르고, HUD 쪽이 이 이벤트를 구독해서 아이콘을 채운다.
     public event Action<AugmentData> OnAugmentAcquired;
