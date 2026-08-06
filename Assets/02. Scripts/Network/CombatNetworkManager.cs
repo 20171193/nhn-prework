@@ -12,6 +12,11 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
 
     public PlayerHUD playerHUD;
     public PlayerHUD enemyHUD;
+    // 로컬 전용(상대방 쪽은 표시 안 함). 인덱스 0/1/2가 숫자키 1/2/3 슬롯에 대응한다.
+    public ThrowableWeaponUI[] throwableWeaponUIs = new ThrowableWeaponUI[3];
+    // 섬광탄 화면 이펙트. 씬에 미리 배치된 UI(Canvas_Effect/IMG_LightFade)라 풀링된
+    // 투척물 프리팹에서 직접 참조할 수 없어 이 매니저를 거쳐 접근한다.
+    public ScreenFadeEffect screenFade;
 
     public TMP_Text statusLabel;
     public Transform[] spawnPoints;
@@ -39,7 +44,7 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
         PhotonNetwork.SerializationRate = 20;
         PhotonNetwork.SendRate = 30;
 
-        PlayerSetupSync.PublishLocal(LocalPlayerSetup.Current);
+        PlayerSetupSync.PublishLocal(PlayData.Current);
 
         // 매치메이킹 씬(MatchmakingManager)을 거쳐 들어오면 이미 방에 들어와 있는 상태로
         // 이 씬이 로드된다. 씬 로드로 진입한 경우 OnJoinedRoom이 다시 오지 않으므로
@@ -113,8 +118,64 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        hud.Init(info, playerView.GetComponent<PlayerStatsController>(), playerView.GetComponent<PlayerCombatContext>());
+        // HUD가 stats.Stats.currentHp/maxHp를 바로 읽으므로(Init 안에서 구독 시점 값으로
+        // 1회 초기화), HUD Init보다 먼저 스탯을 채워둬야 한다.
+        var statsController = playerView.GetComponent<PlayerStatsController>();
+        statsController.Init(info.maxHp, info.moveSpeed);
+
+        hud.Init(info, statsController, playerView.GetComponent<PlayerCombatContext>());
+
+        EquipWeapon(playerView, info);
+        EquipThrowableWeapon(playerView, info);
+
+        // 투척무기 UI는 로컬 전용 - 상대방 쪽은 연결하지 않는다.
+        if (!playerView.IsMine || throwableWeaponUIs == null) return;
+
+        var throwableWeapon = playerView.GetComponent<ThrowableWeaponController>();
+        for (int i = 0; i < throwableWeaponUIs.Length; i++)
+            throwableWeaponUIs[i]?.Init(throwableWeapon, i);
     }
+
+    // weaponId로 DB에서 무기를 찾아 장착한다. 로컬/상대방 둘 다 실제로 무기를 들고 있는
+    // 모습이 보여야 하므로 IsMine과 무관하게 호출한다.
+    // 아직 무기 선택 UI가 없어 weaponId가 기본값(0)일 수 있으므로, 못 찾으면 첫 번째
+    // 무기로 대체한다.
+    void EquipWeapon(PhotonView playerView, PlayerInfo info)
+    {
+        var weaponDatabase = WeaponDatabase.Instance;
+        if (weaponDatabase == null) return;
+
+        if (!weaponDatabase.TryGet(info.weaponId, out var weaponData))
+        {
+            Debug.LogWarning($"weaponId {info.weaponId}에 해당하는 무기를 찾지 못해 첫 번째 무기로 대체합니다.", this);
+            weaponData = weaponDatabase.entries.Count > 0 ? weaponDatabase.entries[0] : null;
+        }
+
+        if (weaponData == null || weaponData.prefab == null) return;
+
+        playerView.GetComponent<PlayerCombatContext>().EquipWeapon(weaponData.prefab);
+    }
+
+    // throwableWeaponId로 DB에서 기본 투척무기를 찾아 슬롯0에 장착한다. EquipWeapon과 같은 원칙 -
+    // 로컬/상대방 둘 다, 못 찾으면 첫 번째 투척무기로 대체한다.
+    void EquipThrowableWeapon(PhotonView playerView, PlayerInfo info)
+    {
+        var throwableWeaponDatabase = ThrowableWeaponDatabase.Instance;
+        if (throwableWeaponDatabase == null) return;
+
+        if (!throwableWeaponDatabase.TryGet(info.throwableWeaponId, out var weaponData))
+        {
+            Debug.LogWarning($"throwableWeaponId {info.throwableWeaponId}에 해당하는 투척무기를 찾지 못해 첫 번째 투척무기로 대체합니다.", this);
+            weaponData = throwableWeaponDatabase.entries.Count > 0 ? throwableWeaponDatabase.entries[0] : null;
+        }
+
+        if (weaponData == null) return;
+
+        playerView.GetComponent<ThrowableWeaponController>().Equip(0, weaponData);
+    }
+
+    // 섬광탄에 맞은 로컬 플레이어의 화면을 밝게 한다(FlashThrowable이 호출).
+    public void PlayScreenFade(float holdDuration) => screenFade?.Play(holdDuration);
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
