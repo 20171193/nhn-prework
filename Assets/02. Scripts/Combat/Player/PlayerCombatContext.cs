@@ -16,7 +16,14 @@ public class PlayerCombatContext : MonoBehaviourPun
 {
     public PlayerStatsController playerStatsController;
     public WeaponController weaponController;
+    // 증강으로 투척무기 슬롯을 잠금해제할 때 씀 (context.throwableWeaponController.Equip(i, data)).
+    public ThrowableWeaponController throwableWeaponController;
     public Collider2D hitCollider; // 이 플레이어를 맞힐 수 있는 콜라이더. 자신이 쏜 발사체가 이걸 무시하도록 넘겨줄 때 씀
+
+    [SerializeField] private Transform weaponSocket; // EquipWeapon이 무기 프리팹을 여기 자식으로 스폰한다.
+
+    // 투척무기 에임 중 소켓에 붙는 미리보기 전용 인스턴스(실제로 날아가는 인스턴스와는 별개).
+    GameObject throwablePreviewInstance;
 
     readonly List<StatModifier> modifiers = new List<StatModifier>();
 
@@ -77,6 +84,16 @@ public class PlayerCombatContext : MonoBehaviourPun
         Recalculate();
     }
 
+    // DB에서 찾은 무기 프리팹을 weaponSocket 아래 스폰하고 weaponController를 채운다.
+    // Weapon 프리팹이 언제 생기든(정적이 아니라 여기서 동적으로 생기므로) 자식 쪽 컴포넌트들은
+    // GetComponentInParent로 이 오브젝트를 스스로 찾아간다 - 반대 방향(부모->자식)만 이렇게 주입해준다.
+    public void EquipWeapon(GameObject weaponPrefab)
+    {
+        var instance = Instantiate(weaponPrefab, weaponSocket);
+        weaponController = instance.GetComponent<WeaponController>();
+        Recalculate();
+    }
+
     public void FireVolley(Vector3 muzzlePosition, float[] payload)
     {
         photonView.RPC(nameof(RpcFireVolley), RpcTarget.All, muzzlePosition, payload);
@@ -85,13 +102,70 @@ public class PlayerCombatContext : MonoBehaviourPun
     [PunRPC]
     void RpcFireVolley(Vector3 muzzlePosition, float[] payload)
     {
-        ProjectileVolleyData.Unpack(payload, out float speed, out float damage, out float range, out Vector2[] directions);
+        ProjectileVolleyData.Unpack(payload, out int projectileId, out float speed, out float damage, out float range, out Vector2[] directions);
+
+        if (!ProjectileDatabase.Instance.TryGet(projectileId, out var projectileData))
+        {
+            Debug.LogWarning($"projectileId {projectileId}에 해당하는 발사체를 찾지 못했습니다.", this);
+            return;
+        }
 
         foreach (var dir in directions)
         {
-            var proj = ProjectilePool.Get(muzzlePosition, Quaternion.identity);
+            var proj = ProjectilePool.Get(projectileData.prefab, muzzlePosition, Quaternion.identity);
             proj.GetComponent<Projectile>().Init(dir, speed, damage, range, hitCollider);
         }
+    }
+
+    // FireVolley와 같은 패턴 - 투척도 RPC로 전파하고, 각 클라이언트가 로컬로 독립 재생한다.
+    public void Throw(Vector3 start, Vector3 end, int throwableWeaponId)
+    {
+        photonView.RPC(nameof(RpcThrow), RpcTarget.All, start, end, throwableWeaponId);
+    }
+
+    [PunRPC]
+    void RpcThrow(Vector3 start, Vector3 end, int throwableWeaponId)
+    {
+        if (!ThrowableWeaponDatabase.Instance.TryGet(throwableWeaponId, out var data) || data.prefab == null)
+        {
+            Debug.LogWarning($"throwableWeaponId {throwableWeaponId}에 해당하는 투척물을 찾지 못했습니다.", this);
+            return;
+        }
+
+        var obj = ProjectilePool.Get(data.prefab, start, Quaternion.identity);
+        obj.GetComponent<ThrowableObject>().Init(start, end, data);
+    }
+
+    // 숫자키로 투척무기 에임에 들어갔을 때, 실제로 던지는 것과 같은 프리팹을 ProjectilePool에서
+    // 꺼내 소켓에 붙여 미리보기로 보여준다(Instantiate 아님 - 실제 투척과 같은 풀 재사용).
+    // 총 자체는 그대로 두고 스프라이트만 숨긴다.
+    public void ShowThrowablePreview(GameObject prefab)
+    {
+        if (weaponController != null && weaponController.weaponSprite != null)
+            weaponController.weaponSprite.enabled = false;
+
+        if (prefab == null) return;
+
+        throwablePreviewInstance = ProjectilePool.Get(prefab, weaponSocket.position, weaponSocket.rotation);
+        throwablePreviewInstance.transform.SetParent(weaponSocket); // 플레이어를 따라 움직이도록
+
+        var throwable = throwablePreviewInstance.GetComponent<ThrowableObject>();
+        if (throwable != null) throwable.enabled = false; // 미리보기는 날아가는 로직이 돌면 안 됨
+    }
+
+    public void HideThrowablePreview()
+    {
+        if (throwablePreviewInstance != null)
+        {
+            var throwable = throwablePreviewInstance.GetComponent<ThrowableObject>();
+            if (throwable != null) throwable.enabled = true; // 다음에 이 인스턴스가 실제로 던져질 때를 대비해 원복
+
+            ProjectilePool.Release(throwablePreviewInstance);
+            throwablePreviewInstance = null;
+        }
+
+        if (weaponController != null && weaponController.weaponSprite != null)
+            weaponController.weaponSprite.enabled = true;
     }
 
     // 증강 선택 UI(증강 개발자 쪽)가 플레이어가 고른 증강을 최종 확정할 때 호출하는 지점.
@@ -107,6 +181,11 @@ public class PlayerCombatContext : MonoBehaviourPun
     }
     void Recalculate()
     {
+        // playerStatsController.Stats/weaponController는 각각 Init/EquipWeapon으로 동적으로
+        // 채워져서, Start()가 먼저 돌면 아직 비어있을 수 있다 - 그때는 조용히 넘어가고
+        // Init/EquipWeapon 쪽이 다시 불러준다.
+        if (playerStatsController == null || playerStatsController.Stats == null || weaponController == null) return;
+
         var playerStats = playerStatsController.Stats;
         var weaponStats = weaponController.Stats;
         var projectileStats = weaponController.ProjectileStats;

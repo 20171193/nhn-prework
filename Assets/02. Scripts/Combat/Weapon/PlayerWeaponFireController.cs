@@ -5,24 +5,27 @@ using UnityEngine;
 [RequireComponent(typeof(WeaponController))]
 public class PlayerWeaponFireController : MonoBehaviour
 {
-    public PlayerAimController aim;
-
+    PlayerAimController aim;
     WeaponController weapon;
     PlayerCombatContext combatContext;
     PhotonView ownerPhotonView;
+    ThrowableWeaponController throwableWeapon;
     float fireTimer;
 
     void Awake()
     {
         weapon = GetComponent<WeaponController>();
+        aim = GetComponentInParent<PlayerAimController>();
         combatContext = GetComponentInParent<PlayerCombatContext>();
         ownerPhotonView = GetComponentInParent<PhotonView>();
+        throwableWeapon = GetComponentInParent<ThrowableWeaponController>();
     }
 
     void Update()
     {
         if (ownerPhotonView != null && !ownerPhotonView.IsMine) return;
         if (!combatContext.InputEnabled) return;
+        if (throwableWeapon != null && throwableWeapon.IsAiming) return;
 
         fireTimer -= Time.deltaTime;
 
@@ -49,6 +52,7 @@ public class PlayerWeaponFireController : MonoBehaviour
             directions[i] = FanSpread.GetDirection(direction, i, weapon.Stats.spreadAngleDegrees);
 
         float[] payload = ProjectileVolleyData.Pack(
+            weapon.baseData.projectileData.id,
             combatContext.EffectiveProjectileSpeed,
             combatContext.EffectiveProjectileDamage,
             weapon.Stats.projectileRange,
