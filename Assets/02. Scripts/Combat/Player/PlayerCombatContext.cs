@@ -26,6 +26,27 @@ public class PlayerCombatContext : MonoBehaviourPun
     public float EffectiveProjectileDamage { get; private set; }
     public int EffectiveProjectileCount { get; private set; }
 
+    // 증강 선택에서 고른 증강을 받을 대상으로 자신을 등록한다.
+    // GameManager -> 플레이어 방향의 참조를 두지 않는 이유는 IAugmentSelectionView 주석과 같다.
+    // (플레이어는 씬과 함께 사라지지만 GameManager는 씬을 넘어 살아남는다.)
+    //
+    // 한 클라이언트에는 Player가 둘 있다(내 것과 상대의 원격 사본). 소유 검사를 빼면
+    // 나중에 생긴 원격 사본이 등록을 덮어써서, 내가 고른 증강이 상대 사본에 붙는다.
+    // 그 사본의 이동/발사는 IsMine이 아니라 아무 일도 하지 않으므로 증강이 통째로 사라진다.
+    void OnEnable()
+    {
+        if (!photonView.IsMine) return;
+
+        if (GameManager.Instance != null)
+            GameManager.Instance.RegisterLocalPlayer(this);
+    }
+
+    void OnDisable()
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.UnregisterLocalPlayer(this);
+    }
+
     // 실제로 획득에 성공한 증강 하나를 UI(HUD 등)에 알린다. PlayerCombatContext는
     // 누가 듣는지 모르고, HUD 쪽이 이 이벤트를 구독해서 아이콘을 채운다.
     public event Action<AugmentData> OnAugmentAcquired;

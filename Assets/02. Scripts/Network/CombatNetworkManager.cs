@@ -13,6 +13,9 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
     public TMP_Text statusLabel;
     public Transform[] spawnPoints;
 
+    // 상대가 나갔다 다시 들어오는 등으로 매치가 두 번 시작되지 않게 막는다.
+    bool matchStarted;
+
     void Start()
     {
         // 기본값(SerializationRate 10/s)은 위치 갱신이 뜸해서 원격 캐릭터가 눈에 띄게 뒤처져 보인다.
@@ -51,11 +54,33 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
         PhotonNetwork.Instantiate("Player", spawnPos, Quaternion.identity);
 
         SetStatus($"Room joined ({PhotonNetwork.CurrentRoom.PlayerCount}/{MaxPlayers})");
+        TryStartMatch();
+    }
+
+    // 두 명이 다 모인 뒤에 매치 흐름(증강 선택 → 전투 x3)을 시작한다.
+    // 먼저 들어온 쪽에서 혼자 라운드가 돌기 시작하면 상대와 라운드가 어긋나기 때문이다.
+    //
+    // 양쪽 클라이언트가 다 불러야 한다. 단계를 실제로 넘기는 것은 마스터뿐이고,
+    // 나머지는 마스터가 방송하는 마감 시각(PhotonNetwork.Time 기준)을 따라간다. GameManager 주석 참고.
+    void TryStartMatch()
+    {
+        if (matchStarted) return;
+        if (!PhotonNetwork.InRoom || PhotonNetwork.CurrentRoom.PlayerCount < MaxPlayers) return;
+
+        if (GameManager.Instance == null)
+        {
+            Debug.LogError("GameManager가 없습니다. Resources/GameManager 프리팹이 있는지 확인하세요.", this);
+            return;
+        }
+
+        matchStarted = true;
+        GameManager.Instance.StartMatch();
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
         SetStatus($"Room joined ({PhotonNetwork.CurrentRoom.PlayerCount}/{MaxPlayers})");
+        TryStartMatch();
     }
 
     public override void OnPlayerLeftRoom(Player otherPlayer)
