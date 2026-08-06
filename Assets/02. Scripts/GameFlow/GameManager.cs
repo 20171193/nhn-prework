@@ -18,6 +18,9 @@ public enum GamePhase
 // 씬 진입 → 준비 → 전투 1분 → 증강 선택 → 전투 1분 → 증강 선택 → 전투 1분 → 증강 선택
 //         → 전투 30초 → 종료.
 //
+// 승부는 사망으로 갈린다. 죽은 쪽이 마스터에게 보고하고, 마스터가 남은 사람을 승자로 정해
+// MatchOver 방송에 실어 보낸다(WinnerActorNumber). 제한 시간까지 아무도 죽지 않으면 무승부다.
+//
 // 매치 시계(MatchTimeLeft)는 전투 시간만 센다. 증강 선택 동안에는 멈춘다.
 // 그래서 전투 구간을 다 더하면 60+60+60+30 = 210초, 정확히 3분 30초가 된다.
 // 증강 선택이 전투 사이가 아니라 전투 도중에 끼어들므로, 그동안은 양쪽 조작을 막는다
@@ -56,6 +59,8 @@ public class GameManager : Singleton<GameManager>
     private AugmentManager augmentManager;
     private IAugmentSelectionView selectionView;
     private PlayerCombatContext localPlayer;
+    // 사망 구독을 걸어둔 대상. 플레이어가 교체될 때 이전 구독을 확실히 떼기 위해 따로 들고 있다.
+    private PlayerStatsController subscribedStats;
 
     private readonly GameFlowSync sync = new GameFlowSync();
     // 이번 증강 선택을 끝낸 사람들. 마스터만 쓴다.
@@ -75,6 +80,13 @@ public class GameManager : Singleton<GameManager>
     public AugmentManager AugmentManager => augmentManager;
 
     public GamePhase Phase { get; private set; } = GamePhase.None;
+
+    // 이긴 사람의 Photon ActorNumber. 0이면 승자 없음(무승부, 또는 아직 안 끝남).
+    // 판정은 마스터만 하고 나머지는 MatchOver 방송으로 같은 값을 받는다.
+    public int WinnerActorNumber { get; private set; }
+    // 내 ActorNumber. 결과 화면이 "내가 이겼는지"를 판단할 때 쓴다. 방 밖에서는 0.
+    public int LocalActorNumber => sync.LocalActorNumber;
+
     // 지금까지 띄운 증강 선택 횟수. 매치 시작 전에는 0.
     public int AugmentSelectionsOffered { get; private set; }
     public int AugmentSelectCount => augmentSelectCount;
@@ -116,6 +128,7 @@ public class GameManager : Singleton<GameManager>
         sync.PhaseReceived += OnPhaseReceived;
         sync.SelectionDoneReceived += OnSelectionDoneReceived;
         sync.EndMatchRequested += OnEndMatchRequested;
+        sync.DeathReported += OnDeathReported;
         sync.MasterClientSwitched += OnMasterClientSwitched;
         sync.Enable();
     }
@@ -125,8 +138,11 @@ public class GameManager : Singleton<GameManager>
         sync.PhaseReceived -= OnPhaseReceived;
         sync.SelectionDoneReceived -= OnSelectionDoneReceived;
         sync.EndMatchRequested -= OnEndMatchRequested;
+        sync.DeathReported -= OnDeathReported;
         sync.MasterClientSwitched -= OnMasterClientSwitched;
         sync.Disable();
+
+        SubscribeDeath(null);
     }
 
     private void Update()
@@ -183,24 +199,54 @@ public class GameManager : Singleton<GameManager>
         phaseEndTime = 0d;
         matchTimeLeftAfterPhase = 0f;
         AugmentSelectionsOffered = 0;
+        WinnerActorNumber = 0;
         selectionDone.Clear();
         SetPhase(GamePhase.None);
     }
 
-    // 제한 시간이 남아 있어도 매치를 끝낸다. 승부가 갈렸을 때(사망 등) 부르는 자리다.
+    // 제한 시간이 남아 있어도 매치를 승자 없이(무승부로) 끝낸다.
     // 마스터가 아니면 직접 끊지 못한다. 요청만 보내고, 실제로 끊는 것은 마스터다.
     // 한쪽만 매치를 끝내고 다른 쪽은 계속 싸우는 상황을 막기 위해서다.
     public void EndMatch()
     {
-        if (!IsMatchRunning || Phase == GamePhase.MatchOver) return;
+        if (!CanEndMatch()) return;
 
         if (sync.IsAuthority)
         {
-            isMatchEnding = true;
+            FinishMatch(0);
             return;
         }
 
         sync.RequestEndMatch();
+    }
+
+    // 내 플레이어가 죽었다. 승자를 여기서 정하지 않고 마스터에게 보고만 한다.
+    // 양쪽이 각자 판정하면 서로 다른 승자를 띄울 수 있기 때문이다.
+    //
+    // 사망 이벤트는 데미지 RPC 안에서 나오므로 같은 프레임에 두 번 들어올 수 있고
+    // (이미 0인 HP에 한 발 더 맞는 경우), 그 중복은 CanEndMatch가 걸러낸다.
+    private void ReportLocalPlayerDeath()
+    {
+        if (!CanEndMatch()) return;
+
+        if (sync.IsAuthority)
+        {
+            // 혼자일 때(방 밖)는 남는 사람이 없어 승자도 없다.
+            FinishMatch(sync.SurvivorActorNumber(sync.LocalActorNumber));
+            return;
+        }
+
+        sync.ReportDeath();
+    }
+
+    // 매치가 돌고 있고 아직 끝나는 중이 아닐 때만 승부를 확정할 수 있다.
+    private bool CanEndMatch() => IsMatchRunning && Phase != GamePhase.MatchOver && !isMatchEnding;
+
+    // 마스터 전용. 승자를 확정하고 진행 코루틴이 MatchOver로 빠지게 한다.
+    private void FinishMatch(int winnerActorNumber)
+    {
+        WinnerActorNumber = winnerActorNumber;
+        isMatchEnding = true;
     }
 
     // 증강 선택 화면이 자기 자신을 등록한다. 화면이 사라질 때 Unregister까지 해줘야 한다.
@@ -233,19 +279,44 @@ public class GameManager : Singleton<GameManager>
 
         localPlayer = context;
 
+        // 사망은 흐름을 끝내는 사건이라 흐름 쪽에서 직접 듣는다.
+        // PlayerStatsController를 따로 등록받지 않고 여기서 꺼내 쓰는 이유는, 플레이어의
+        // 등록/해제 시점이 곧 구독/해제 시점이라 수명을 한곳에서 관리할 수 있기 때문이다.
+        if (context.playerStatsController == null)
+            Debug.LogWarning("PlayerCombatContext에 playerStatsController가 연결되어 있지 않습니다. " +
+                             "사망을 감지하지 못해 매치가 제한 시간까지 끝나지 않습니다.", context);
+
+        SubscribeDeath(context.playerStatsController);
+
         // 단계 도중에 스폰됐을 수 있다. 지금 단계에 맞는 조작 상태로 맞춰준다.
         ApplyInputGate();
     }
 
     public void UnregisterLocalPlayer(PlayerCombatContext context)
     {
-        if (localPlayer == context) localPlayer = null;
+        if (localPlayer != context) return;
+
+        localPlayer = null;
+        SubscribeDeath(null);
+    }
+
+    // 사망 구독을 stats 하나로 갈아끼운다. null이면 떼기만 한다.
+    private void SubscribeDeath(PlayerStatsController stats)
+    {
+        if (subscribedStats == stats) return;
+
+        if (subscribedStats != null) subscribedStats.OnDeath -= ReportLocalPlayerDeath;
+
+        subscribedStats = stats;
+
+        if (subscribedStats != null) subscribedStats.OnDeath += ReportLocalPlayerDeath;
     }
 
     private void ResetMatchState()
     {
         augmentManager = new AugmentManager(augmentCatalog);
         AugmentSelectionsOffered = 0;
+        WinnerActorNumber = 0;
         isMatchEnding = false;
         matchTimeLeftAfterPhase = matchDuration;
         selectionDone.Clear();
@@ -346,7 +417,7 @@ public class GameManager : Singleton<GameManager>
         PhaseTimeLeft = RemainingTime();
 
         if (sync.IsAuthority)
-            sync.BroadcastPhase(phase, AugmentSelectionsOffered, endTime, matchTimeLeftAfter);
+            sync.BroadcastPhase(phase, AugmentSelectionsOffered, endTime, matchTimeLeftAfter, WinnerActorNumber);
 
         SetPhase(phase);
     }
@@ -381,7 +452,8 @@ public class GameManager : Singleton<GameManager>
 
     // ── 따라가는 쪽 ──────────────────────────────────────────────────
 
-    private void OnPhaseReceived(GamePhase phase, int selectionIndex, double endTime, float matchTimeLeftAfter)
+    private void OnPhaseReceived(GamePhase phase, int selectionIndex, double endTime, float matchTimeLeftAfter,
+        int winnerActorNumber)
     {
         // 내가 마스터면 내 코루틴이 진행을 맡는다. (교체 직후 늦게 도착한 방송)
         if (sync.IsAuthority) return;
@@ -398,6 +470,8 @@ public class GameManager : Singleton<GameManager>
         matchTimeLeftAfterPhase = matchTimeLeftAfter;
         PhaseTimeLeft = RemainingTime();
         AugmentSelectionsOffered = selectionIndex;
+        // 승자는 마스터가 정한 값을 그대로 받는다. MatchOver 전에는 0이다.
+        WinnerActorNumber = winnerActorNumber;
 
         // 같은 단계가 다시 오면(재전송 등) 시각만 갱신하고 화면은 건드리지 않는다.
         if (Phase == phase) return;
@@ -437,6 +511,8 @@ public class GameManager : Singleton<GameManager>
         isFollowing = false;
         PhaseTimeLeft = 0f;
         matchTimeLeftAfterPhase = 0f;
+        // 상대가 나갔으니 남은 내가 이긴 것으로 본다. 여기서 정하지 않으면 결과 화면이 빈다.
+        WinnerActorNumber = sync.LocalActorNumber;
         SetPhase(GamePhase.MatchOver);
         MatchEnded?.Invoke();
     }
@@ -454,9 +530,19 @@ public class GameManager : Singleton<GameManager>
 
     private void OnEndMatchRequested()
     {
-        if (!sync.IsAuthority || !IsMatchRunning) return;
+        if (!sync.IsAuthority || !CanEndMatch()) return;
 
-        isMatchEnding = true;
+        FinishMatch(0);
+    }
+
+    // 죽었다는 보고를 받은 마스터가 승자를 정한다. 죽은 사람 말고 남은 사람이 이긴다.
+    // 둘이 거의 동시에 죽으면 먼저 도착한 보고가 이긴다 - 무승부로 처리하려면
+    // 여기서 짧은 유예를 두고 양쪽 보고를 모아야 한다.
+    private void OnDeathReported(int deadActorNumber)
+    {
+        if (!sync.IsAuthority || !CanEndMatch()) return;
+
+        FinishMatch(sync.SurvivorActorNumber(deadActorNumber));
     }
 
     // ── 증강 선택 화면 ───────────────────────────────────────────────

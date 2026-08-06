@@ -25,6 +25,7 @@ public class GameFlowSync : IOnEventCallback, IInRoomCallbacks
     const byte PhaseEventCode = 71;
     const byte SelectionDoneEventCode = 72;
     const byte EndMatchEventCode = 73;
+    const byte DeathEventCode = 74;
 
     // 단계 방송은 놓치면 그 클라이언트의 매치가 그대로 멈춘다. 반드시 신뢰성 있게 보낸다.
     static readonly RaiseEventOptions ToOthers = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
@@ -46,12 +47,16 @@ public class GameFlowSync : IOnEventCallback, IInRoomCallbacks
 
     public int LocalActorNumber => IsOnline ? PhotonNetwork.LocalPlayer.ActorNumber : 0;
 
-    // 마스터가 보낸 단계. (단계, 증강 선택 회차, 마감 시각, 그 단계가 끝났을 때 남는 전투 시간)
-    public event Action<GamePhase, int, double, float> PhaseReceived;
+    // 마스터가 보낸 단계.
+    // (단계, 증강 선택 회차, 마감 시각, 그 단계가 끝났을 때 남는 전투 시간, 승자 ActorNumber)
+    // 승자는 MatchOver 방송에만 실린다. 나머지 단계에서는 0이다.
+    public event Action<GamePhase, int, double, float, int> PhaseReceived;
     // 증강을 다 고른 사람이 마스터에게 알린다. (보낸 사람 ActorNumber, 증강 선택 회차)
     public event Action<int, int> SelectionDoneReceived;
     // 매치를 끊어달라는 요청이 마스터에게 도착했다.
     public event Action EndMatchRequested;
+    // 죽었다는 보고가 마스터에게 도착했다. (죽은 사람 ActorNumber)
+    public event Action<int> DeathReported;
     // 마스터가 바뀌었다.
     public event Action MasterClientSwitched;
 
@@ -72,11 +77,14 @@ public class GameFlowSync : IOnEventCallback, IInRoomCallbacks
     }
 
     // 마스터 전용. 지금 들어간 단계와 그 마감 시각을 나머지에게 알린다.
-    public void BroadcastPhase(GamePhase phase, int selectionIndex, double endTime, float matchTimeLeftAfter)
+    public void BroadcastPhase(GamePhase phase, int selectionIndex, double endTime, float matchTimeLeftAfter,
+        int winnerActorNumber)
     {
         if (!IsOnline) return;
 
-        Raise(PhaseEventCode, new object[] { (byte)phase, selectionIndex, endTime, matchTimeLeftAfter }, ToOthers);
+        Raise(PhaseEventCode,
+            new object[] { (byte)phase, selectionIndex, endTime, matchTimeLeftAfter, winnerActorNumber },
+            ToOthers);
     }
 
     // 증강 선택이 끝났음을 마스터에게 알린다. 마스터는 모두의 보고를 기다렸다가 전투로 돌아간다.
@@ -95,6 +103,29 @@ public class GameFlowSync : IOnEventCallback, IInRoomCallbacks
         Raise(EndMatchEventCode, null, ToMaster);
     }
 
+    // 내 플레이어가 죽었다고 마스터에게 알린다. 누가 죽었는지는 보낸 사람으로 알 수 있으므로
+    // 따로 싣지 않는다. 승자를 정하는 것은 받는 쪽(마스터)이다.
+    public void ReportDeath()
+    {
+        if (!IsOnline) return;
+
+        Raise(DeathEventCode, null, ToMaster);
+    }
+
+    // 죽은 사람을 뺀 나머지. 1:1이라 한 명이다.
+    // 방을 나간 직후처럼 아무도 남지 않으면 0(승자 없음)을 준다.
+    public int SurvivorActorNumber(int deadActorNumber)
+    {
+        if (!IsOnline) return 0;
+
+        foreach (var player in PhotonNetwork.CurrentRoom.Players.Values)
+        {
+            if (player.ActorNumber != deadActorNumber) return player.ActorNumber;
+        }
+
+        return 0;
+    }
+
     static void Raise(byte code, object content, RaiseEventOptions options)
     {
         PhotonNetwork.RaiseEvent(code, content, options, SendOptions.SendReliable);
@@ -106,7 +137,8 @@ public class GameFlowSync : IOnEventCallback, IInRoomCallbacks
         {
             case PhaseEventCode:
                 var data = (object[])photonEvent.CustomData;
-                PhaseReceived?.Invoke((GamePhase)(byte)data[0], (int)data[1], (double)data[2], (float)data[3]);
+                PhaseReceived?.Invoke((GamePhase)(byte)data[0], (int)data[1], (double)data[2], (float)data[3],
+                    (int)data[4]);
                 break;
 
             case SelectionDoneEventCode:
@@ -115,6 +147,10 @@ public class GameFlowSync : IOnEventCallback, IInRoomCallbacks
 
             case EndMatchEventCode:
                 EndMatchRequested?.Invoke();
+                break;
+
+            case DeathEventCode:
+                DeathReported?.Invoke(photonEvent.Sender);
                 break;
         }
     }
