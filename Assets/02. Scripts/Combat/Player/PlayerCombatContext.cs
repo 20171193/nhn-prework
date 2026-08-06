@@ -14,8 +14,6 @@ using UnityEngine;
 // 아니라 각 클라이언트가 RPC를 받아 로컬로 직접 생성한다.
 public class PlayerCombatContext : MonoBehaviourPun
 {
-    const string ProjectilePrefabName = "Projectile";
-
     public PlayerStatsController playerStatsController;
     public WeaponController weaponController;
     public Collider2D hitCollider; // 이 플레이어를 맞힐 수 있는 콜라이더. 자신이 쏜 발사체가 이걸 무시하도록 넘겨줄 때 씀
@@ -47,11 +45,9 @@ public class PlayerCombatContext : MonoBehaviourPun
     {
         ProjectileVolleyData.Unpack(payload, out float speed, out float damage, out float range, out Vector2[] directions);
 
-        var prefab = Resources.Load<GameObject>(ProjectilePrefabName);
-
         foreach (var dir in directions)
         {
-            var proj = Instantiate(prefab, muzzlePosition, Quaternion.identity);
+            var proj = ProjectilePool.Get(muzzlePosition, Quaternion.identity);
             proj.GetComponent<Projectile>().Init(dir, speed, damage, range, hitCollider);
         }
     }
