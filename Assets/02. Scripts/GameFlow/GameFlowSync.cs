@@ -8,9 +8,10 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 // 매치 흐름을 두 클라이언트 사이에서 맞추는 창구. GameManager가 쓴다.
 //
 // 흐름의 주인은 마스터 클라이언트 한 명이다. 마스터가 단계를 넘길 때마다
-// (단계, 라운드, 마감 시각)을 방송하고, 나머지는 그것을 그대로 따라간다.
+// (단계, 증강 선택 회차, 마감 시각, 그 단계가 끝났을 때 남는 전투 시간)을 방송하고,
+// 나머지는 그것을 그대로 따라간다.
 // 마감 시각은 PhotonNetwork.Time 기준의 절대 시각이라 양쪽이 같은 값을 본다.
-// 각자 제한 시간을 세는 방식이었다면 접속 시점 차이와 프레임 차이만큼 라운드가 어긋난다.
+// 각자 제한 시간을 세는 방식이었다면 접속 시점 차이와 프레임 차이만큼 진행이 어긋난다.
 //
 // PhotonView 대신 RaiseEvent를 쓴다. GameManager는 PhotonNetwork.Instantiate로 생기지 않고
 // Bootstrap이 각자 만들어 씬을 넘겨 들고 다니는 오브젝트라 붙일 ViewID가 없다.
@@ -23,7 +24,7 @@ public class GameFlowSync : IOnEventCallback, IInRoomCallbacks
     // Photon이 200번 이상을 내부용으로 쓰므로 그 아래에서 고른다.
     const byte PhaseEventCode = 71;
     const byte SelectionDoneEventCode = 72;
-    const byte EndRoundEventCode = 73;
+    const byte EndMatchEventCode = 73;
 
     // 단계 방송은 놓치면 그 클라이언트의 매치가 그대로 멈춘다. 반드시 신뢰성 있게 보낸다.
     static readonly RaiseEventOptions ToOthers = new RaiseEventOptions { Receivers = ReceiverGroup.Others };
@@ -45,12 +46,12 @@ public class GameFlowSync : IOnEventCallback, IInRoomCallbacks
 
     public int LocalActorNumber => IsOnline ? PhotonNetwork.LocalPlayer.ActorNumber : 0;
 
-    // 마스터가 보낸 단계. (단계, 라운드, 마감 시각)
-    public event Action<GamePhase, int, double> PhaseReceived;
-    // 증강을 다 고른 사람이 마스터에게 알린다. (보낸 사람 ActorNumber, 라운드)
+    // 마스터가 보낸 단계. (단계, 증강 선택 회차, 마감 시각, 그 단계가 끝났을 때 남는 전투 시간)
+    public event Action<GamePhase, int, double, float> PhaseReceived;
+    // 증강을 다 고른 사람이 마스터에게 알린다. (보낸 사람 ActorNumber, 증강 선택 회차)
     public event Action<int, int> SelectionDoneReceived;
-    // 라운드를 끊어달라는 요청이 마스터에게 도착했다. (라운드)
-    public event Action<int> EndRoundRequested;
+    // 매치를 끊어달라는 요청이 마스터에게 도착했다.
+    public event Action EndMatchRequested;
     // 마스터가 바뀌었다.
     public event Action MasterClientSwitched;
 
@@ -71,27 +72,27 @@ public class GameFlowSync : IOnEventCallback, IInRoomCallbacks
     }
 
     // 마스터 전용. 지금 들어간 단계와 그 마감 시각을 나머지에게 알린다.
-    public void BroadcastPhase(GamePhase phase, int round, double endTime)
+    public void BroadcastPhase(GamePhase phase, int selectionIndex, double endTime, float matchTimeLeftAfter)
     {
         if (!IsOnline) return;
 
-        Raise(PhaseEventCode, new object[] { (byte)phase, round, endTime }, ToOthers);
+        Raise(PhaseEventCode, new object[] { (byte)phase, selectionIndex, endTime, matchTimeLeftAfter }, ToOthers);
     }
 
-    // 증강 선택이 끝났음을 마스터에게 알린다. 마스터는 모두의 보고를 기다렸다가 전투로 넘어간다.
-    public void ReportSelectionDone(int round)
+    // 증강 선택이 끝났음을 마스터에게 알린다. 마스터는 모두의 보고를 기다렸다가 전투로 돌아간다.
+    public void ReportSelectionDone(int selectionIndex)
     {
         if (!IsOnline) return;
 
-        Raise(SelectionDoneEventCode, round, ToMaster);
+        Raise(SelectionDoneEventCode, selectionIndex, ToMaster);
     }
 
-    // 승부가 갈렸으니 라운드를 끊어달라고 마스터에게 요청한다.
-    public void RequestEndRound(int round)
+    // 승부가 갈렸으니 매치를 끊어달라고 마스터에게 요청한다.
+    public void RequestEndMatch()
     {
         if (!IsOnline) return;
 
-        Raise(EndRoundEventCode, round, ToMaster);
+        Raise(EndMatchEventCode, null, ToMaster);
     }
 
     static void Raise(byte code, object content, RaiseEventOptions options)
@@ -105,15 +106,15 @@ public class GameFlowSync : IOnEventCallback, IInRoomCallbacks
         {
             case PhaseEventCode:
                 var data = (object[])photonEvent.CustomData;
-                PhaseReceived?.Invoke((GamePhase)(byte)data[0], (int)data[1], (double)data[2]);
+                PhaseReceived?.Invoke((GamePhase)(byte)data[0], (int)data[1], (double)data[2], (float)data[3]);
                 break;
 
             case SelectionDoneEventCode:
                 SelectionDoneReceived?.Invoke(photonEvent.Sender, (int)photonEvent.CustomData);
                 break;
 
-            case EndRoundEventCode:
-                EndRoundRequested?.Invoke((int)photonEvent.CustomData);
+            case EndMatchEventCode:
+                EndMatchRequested?.Invoke();
                 break;
         }
     }
