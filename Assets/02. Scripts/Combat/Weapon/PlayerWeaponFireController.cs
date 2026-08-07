@@ -26,9 +26,12 @@ public class PlayerWeaponFireController : MonoBehaviour
     {
         if (ownerPhotonView != null && !ownerPhotonView.IsMine) return;
         if (!combatContext.InputEnabled) return;
-        if (throwableWeapon != null && throwableWeapon.IsAiming) return;
 
+        // 투척무기를 조준/투척하는 동안에도 쿨다운은 실시간으로 계속 흘러야 한다 - 여기서
+        // return해버리면 fireTimer가 멈춰서, 돌아왔을 때 조준 전의 오래된 진행률이 그대로 보인다.
         fireTimer -= Time.deltaTime;
+
+        if (throwableWeapon != null && throwableWeapon.IsAiming) return;
 
         if (Input.GetMouseButtonDown(0) && fireTimer <= 0f)
         {
@@ -37,9 +40,24 @@ public class PlayerWeaponFireController : MonoBehaviour
             fireTimer = cooldownDuration;
         }
 
-        // 커서의 공격 딜레이 fill - 0(방금 발사) ~ 1(발사 가능).
-        float delayFill = fireTimer > 0f && cooldownDuration > 0f ? 1f - fireTimer / cooldownDuration : 1f;
-        CursorManager.Instance?.SetAttackDelayFill(delayFill);
+        RefreshCursorState();
+    }
+
+    // 딜레이 중이면 Delay 상태 + 진행률(0=방금 발사 ~ 1=발사 가능), 아니면 Aiming.
+    // 매 프레임 Update에서도 부르지만, 투척무기 조준을 취소/투척해서 총 모드로 막 돌아온
+    // 프레임에는 ThrowableWeaponController가 직접 호출해서 다음 프레임까지 기다리지 않고
+    // 곧바로 총의 실제 딜레이 상태를 반영한다.
+    public void RefreshCursorState()
+    {
+        if (fireTimer > 0f && cooldownDuration > 0f)
+        {
+            CursorManager.Instance?.SetState(CursorState.Delay);
+            CursorManager.Instance?.SetDelayFill(1f - fireTimer / cooldownDuration);
+        }
+        else
+        {
+            CursorManager.Instance?.SetState(CursorState.Aiming);
+        }
     }
 
     void Fire()

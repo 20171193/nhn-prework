@@ -75,6 +75,19 @@ public class ThrowableWeaponController : MonoBehaviourPun
         {
             OnRange = Vector2.Distance(transform.position, aim.MouseWorldPosition) <= ThrowRange;
 
+            // 사거리 밖이면 Delay(빨강), 안이면 Aiming(초록). Delay 진입 시 슬라이더 값이 0으로
+            // 초기화되는데(총 쿨다운처럼 SetDelayFill로 채워주는 쪽이 없으면 빈 채로 남음),
+            // 사거리는 진행률 개념이 없으니 곧바로 1로 채워서 항상 꽉 찬 빨강으로 보이게 한다.
+            if (OnRange)
+            {
+                CursorManager.Instance?.SetState(CursorState.Aiming);
+            }
+            else
+            {
+                CursorManager.Instance?.SetState(CursorState.Delay);
+                CursorManager.Instance?.SetDelayFill(1f);
+            }
+
             if (Input.GetMouseButtonDown(0))
                 TryThrow();
         }
@@ -111,6 +124,7 @@ public class ThrowableWeaponController : MonoBehaviourPun
         {
             combatContext.ClearThrowablePreview();
             activeSlotIndex = -1;
+            RefreshGunCursorState(); // 총 모드로 돌아왔으니 다음 프레임까지 기다리지 않고 바로 실제 딜레이 상태를 반영
             return;
         }
 
@@ -132,6 +146,16 @@ public class ThrowableWeaponController : MonoBehaviourPun
         combatContext.ClearThrowablePreview();
         slots[activeSlotIndex].cooldownRemaining = SlotCooldown(activeSlotIndex);
         pendingAimEnd = true;
+        RefreshGunCursorState(); // 총 모드로 돌아왔으니 다음 프레임까지 기다리지 않고 바로 실제 딜레이 상태를 반영
+    }
+
+    // combatContext.weaponController와 같은 오브젝트에 붙어있는 PlayerWeaponFireController를 찾아
+    // 그쪽이 매 프레임 계산하는 실제 쿨다운 상태로 커서를 즉시 다시 맞춘다.
+    void RefreshGunCursorState()
+    {
+        if (combatContext.weaponController == null) return;
+
+        combatContext.weaponController.GetComponent<PlayerWeaponFireController>()?.RefreshCursorState();
     }
 
     // ThrowRangeIndicator.DrawCurve와 동일한 "사거리 밖이면 경계로 클램프" 로직.
