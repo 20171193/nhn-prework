@@ -42,6 +42,10 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
     bool matchStarted;
     Coroutine returnRoutine;
 
+    // Start()의 "이미 방에 있음" 경로와 OnJoinedRoom() 콜백 경로가 진입 시점에 따라
+    // 겹쳐서 둘 다 불릴 수 있다 - 스폰 자체를 멱등하게 만들어 실제 Instantiate는 한 번만 되게 막는다.
+    bool hasSpawnedLocalPlayer;
+
     // 결과 화면(MatchResultUI)이 남은 초를 그대로 읽어 쓴다.
     // 카운트다운을 세는 쪽과 실제로 방을 나가는 쪽이 같아야 화면과 동작이 어긋나지 않는다.
     public bool IsReturningToLobby { get; private set; }
@@ -111,6 +115,9 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
 
     void SpawnLocalPlayer()
     {
+        if (hasSpawnedLocalPlayer) return;
+        hasSpawnedLocalPlayer = true;
+
         int spawnIndex = (PhotonNetwork.LocalPlayer.ActorNumber - 1) % spawnPoints.Length;
         Vector3 spawnPos = spawnPoints[spawnIndex].position;
         PhotonNetwork.Instantiate("Player", spawnPos, Quaternion.identity);

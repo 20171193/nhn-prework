@@ -2285,6 +2285,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7eb2874fe402bda4fa624a4b4fa9f4a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  augmentIMG: {fileID: 0}
+  highlightGO: {fileID: 0}
+  tooltipGO: {fileID: 0}
+  tooltipNameTXT: {fileID: 0}
+  tooltipDescriptionTXT: {fileID: 0}
+  lockedIcon: {fileID: 0}
+  tooltipDuration: 5
 --- !u!1 &415402005
 GameObject:
   m_ObjectHideFlags: 0
@@ -2702,6 +2709,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7eb2874fe402bda4fa624a4b4fa9f4a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  augmentIMG: {fileID: 0}
+  highlightGO: {fileID: 0}
+  tooltipGO: {fileID: 0}
+  tooltipNameTXT: {fileID: 0}
+  tooltipDescriptionTXT: {fileID: 0}
+  lockedIcon: {fileID: 0}
+  tooltipDuration: 5
 --- !u!1 &576683966
 GameObject:
   m_ObjectHideFlags: 0
@@ -3432,6 +3446,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7eb2874fe402bda4fa624a4b4fa9f4a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  augmentIMG: {fileID: 0}
+  highlightGO: {fileID: 0}
+  tooltipGO: {fileID: 0}
+  tooltipNameTXT: {fileID: 0}
+  tooltipDescriptionTXT: {fileID: 0}
+  lockedIcon: {fileID: 0}
+  tooltipDuration: 5
 --- !u!1 &791879193
 GameObject:
   m_ObjectHideFlags: 0
@@ -10850,7 +10871,7 @@ Transform:
   m_GameObject: {fileID: 1387496701}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -10, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11632,6 +11653,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7eb2874fe402bda4fa624a4b4fa9f4a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  augmentIMG: {fileID: 0}
+  highlightGO: {fileID: 0}
+  tooltipGO: {fileID: 0}
+  tooltipNameTXT: {fileID: 0}
+  tooltipDescriptionTXT: {fileID: 0}
+  lockedIcon: {fileID: 0}
+  tooltipDuration: 5
 --- !u!1 &1768939618
 GameObject:
   m_ObjectHideFlags: 0
@@ -11758,6 +11786,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7eb2874fe402bda4fa624a4b4fa9f4a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  augmentIMG: {fileID: 0}
+  highlightGO: {fileID: 0}
+  tooltipGO: {fileID: 0}
+  tooltipNameTXT: {fileID: 0}
+  tooltipDescriptionTXT: {fileID: 0}
+  lockedIcon: {fileID: 0}
+  tooltipDuration: 5
 --- !u!1 &1777442246
 GameObject:
   m_ObjectHideFlags: 0
@@ -12070,6 +12105,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7eb2874fe402bda4fa624a4b4fa9f4a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  augmentIMG: {fileID: 0}
+  highlightGO: {fileID: 0}
+  tooltipGO: {fileID: 0}
+  tooltipNameTXT: {fileID: 0}
+  tooltipDescriptionTXT: {fileID: 0}
+  lockedIcon: {fileID: 0}
+  tooltipDuration: 5
 --- !u!1 &1838593958
 GameObject:
   m_ObjectHideFlags: 0
