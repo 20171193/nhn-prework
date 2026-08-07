@@ -1120,7 +1120,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sceneName: SingleGame
-  button: {fileID: 742645700}
 --- !u!1 &766819425
 GameObject:
   m_ObjectHideFlags: 0
