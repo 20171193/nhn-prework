@@ -322,7 +322,9 @@ public class GameManager : Singleton<GameManager>
 
     private void ResetMatchState()
     {
-        augmentManager = new AugmentManager(augmentCatalog);
+        // 뽑기 시점의 localPlayer를 넘겨준다 - 이미 갖고 있는 투척무기를 주는 증강처럼
+        // 플레이어 상태에 따라 선택지에서 빠져야 하는 증강이 있다(AugmentData.IsOfferable).
+        augmentManager = new AugmentManager(augmentCatalog, () => localPlayer);
         AugmentSelectionsOffered = 0;
         WinnerActorNumber = 0;
         isMatchEnding = false;

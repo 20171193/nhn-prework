@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ebc5d1d7f0d13347bcd01aa7f845c50, type: 3}
+  m_Name: GrenadeAugment
+  m_EditorClassIdentifier: 
+  id: 40103
+  augmentName: "\uC218\uB958\uD0C4 \uBCF4\uAE09"
+  description: "\uC218\uB958\uD0C4\uC744 \uBE48 \uD22C\uCC99 \uC2AC\uB86F\uC5D0 \uD574\uAE08\uD55C\uB2E4.
+    \uBC94\uC704 \uD3ED\uBC1C\uB85C \uC9C1\uC811 \uD53C\uD574\uB97C \uC900\uB2E4."
+  tier: 2
+  throwable: {fileID: 11400000, guid: 997921533d8a6f641946c07474ead181, type: 2}

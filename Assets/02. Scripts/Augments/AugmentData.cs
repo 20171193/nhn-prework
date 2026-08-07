@@ -25,4 +25,10 @@ public abstract class AugmentData : ScriptableObject, IAugmentEffect, IHasId
     public AugmentTier tier;
 
     public abstract void Apply(PlayerCombatContext context);
+
+    // 지금 이 플레이어에게 선택지로 내놓을 만한 증강인지. AugmentPool이 뽑기 전에 물어본다.
+    // 스탯 증강처럼 언제 먹어도 의미가 있는 것은 그대로 두면 되고, 이미 갖고 있으면
+    // 아무 효과가 없는 증강(투척무기 해금 등)만 재정의해서 걸러낸다.
+    // context는 null일 수 있다 - 플레이어가 없는 씬(흐름 테스트)에서는 확인할 대상이 없다.
+    public virtual bool IsOfferable(PlayerCombatContext context) => true;
 }
