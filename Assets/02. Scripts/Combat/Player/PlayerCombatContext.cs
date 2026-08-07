@@ -121,6 +121,7 @@ public class PlayerCombatContext : MonoBehaviourPun
         }
 
         fireController?.weaponAnimator.SetTrigger("OnFire");
+        SoundManager.Instance?.PlaySfx(SfxId.WeaponFire, muzzlePosition);
     }
 
     // FireVolley와 같은 패턴 - 투척도 RPC로 전파하고, 각 클라이언트가 로컬로 독립 재생한다.
@@ -140,6 +141,9 @@ public class PlayerCombatContext : MonoBehaviourPun
 
         var obj = ProjectilePool.Get(data.prefab, start, Quaternion.identity);
         obj.GetComponent<ThrowableObject>().Init(start, end, data);
+
+        // 수류탄/섬광탄/연막탄 3종 모두 동일한 투척음을 쓴다.
+        SoundManager.Instance?.PlaySfx(SfxId.ThrowWeapon, start);
     }
 
     // Throw와 같은 패턴 - 에임 시작/슬롯 전환도 RPC로 전파해서 상대방 화면에도 총이

@@ -54,6 +54,9 @@ public class MatchmakingManager : MonoBehaviourPunCallbacks
 
         if (string.IsNullOrEmpty(PhotonNetwork.NickName))
             PhotonNetwork.NickName = $"Player{UnityEngine.Random.Range(1000, 10000)}";
+
+        // 이 컴포넌트는 로비 씬에만 존재하므로, 로비 진입 시점 훅으로 그대로 쓴다.
+        SoundManager.Instance?.PlayBgm(BgmId.Lobby);
     }
 
     // "상대 찾기" 버튼이 호출한다.
@@ -234,9 +237,14 @@ public class MatchmakingManager : MonoBehaviourPunCallbacks
 
         SetStatus("게임을 시작합니다...");
 
-        // AutomaticallySyncScene이 켜져 있으므로 마스터만 호출하면 상대도 따라온다.
-        if (PhotonNetwork.IsMasterClient)
-            PhotonNetwork.LoadLevel(gameSceneName);
+        // AutomaticallySyncScene이 켜져 있으므로 마스터만 호출하면 상대도 따라온다 - 나머지는
+        // PUN이 룸 프로퍼티 동기화로 내부적으로 같은 씬을 로드하고, PhotonNetwork.LevelLoadingProgress도
+        // 그때 똑같이 갱신되므로 페이드는 양쪽 클라이언트 모두 동일하게 걸어도 된다.
+        FadeManager.Instance.FadeOutThenPhotonLoad(() =>
+        {
+            if (PhotonNetwork.IsMasterClient)
+                PhotonNetwork.LoadLevel(gameSceneName);
+        });
     }
 
     void StopStartRoutine()

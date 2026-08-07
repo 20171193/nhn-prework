@@ -127,6 +127,10 @@ public abstract class ThrowableObject : MonoBehaviour
     {
         state = State.Waiting;
         elapsed = 0f;
+
+        // 목적지 도착/도중 장애물 충돌 둘 다 "멈추고 대기 상태로 들어감"이라는 같은
+        // 사건이라 하나의 사운드로 처리한다.
+        SoundManager.Instance?.PlaySfx(SfxId.ThrowableWeaponLanding, transform.position);
     }
 
     void UpdateWait()

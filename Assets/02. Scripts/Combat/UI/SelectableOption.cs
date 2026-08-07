@@ -17,7 +17,11 @@ public class SelectableOption : MonoBehaviour
 
     void Awake()
     {
-        GetComponent<Button>().onClick.AddListener(() => onClick?.Invoke(this));
+        GetComponent<Button>().onClick.AddListener(() =>
+        {
+            SoundManager.Instance?.PlaySfxUI(SfxId.ClickNormalBTN);
+            onClick?.Invoke(this);
+        });
     }
 
     public void Init(int id, Sprite icon)

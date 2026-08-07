@@ -38,6 +38,10 @@ public class PlayerStatsController : MonoBehaviourPun, IDamageable
         Stats.currentHp = Mathf.Max(0f, Stats.currentHp - amount);
         OnHpChanged?.Invoke(Stats.currentHp, Stats.maxHp);
 
+        // 로컬(본인)이 맞았을 때만 재생 - 상대가 맞는 소리까지 내 화면에서 들릴 필요는 없다.
+        if (photonView.IsMine)
+            SoundManager.Instance?.PlaySfx(SfxId.PlayerDamaged, transform.position);
+
         string who = photonView.IsMine ? "로컬 플레이어" : "상대방 플레이어";
         Debug.Log($"[피격] {who} 잔여 HP: {Stats.currentHp}/{Stats.maxHp}");
 

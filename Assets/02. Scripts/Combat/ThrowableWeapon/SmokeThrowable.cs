@@ -13,6 +13,7 @@ public class SmokeThrowable : ThrowableObject
 
     protected override void PlayTriggerAnimation()
     {
+        SoundManager.Instance?.PlaySfx(SfxId.SmokePop, transform.position);
         StartCoroutine(SmokeRoutine());
     }
 

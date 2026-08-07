@@ -14,6 +14,8 @@ public static class Bootstrap
     const string GameManagerPath = "GameManager";
     const string CursorManagerPath = "CursorManager";
     const string LobbyPlayerSetupPath = "LobbyPlayerSetup";
+    const string FadeManagerPath = "FadeManager";
+    const string SoundManagerPath = "SoundManager";
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void Initialize()
@@ -73,6 +75,49 @@ public static class Bootstrap
         if (prefab == null)
         {
             Debug.LogError($"Resources/{LobbyPlayerSetupPath} 프리팹을 찾을 수 없습니다. 프리팹이 Assets/Resources 아래에 있는지 확인하세요.");
+            return;
+        }
+
+        UnityEngine.Object.Instantiate(prefab);
+    }
+
+    // 모든 씬 전환(로비 복귀/싱글플레이 진입/매칭 후 전투 씬)에 쓰는 페이드 오버레이도
+    // 게임 시작 시 미리 만들어둔다 - 어느 씬에서 시작하든 항상 존재해야 하기 때문.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    public static void InitializeFadeManager()
+    {
+        if (FadeManager.Instance != null) return;
+
+        var prefab = Resources.Load<FadeManager>(FadeManagerPath);
+        if (prefab == null)
+        {
+            Debug.LogError($"Resources/{FadeManagerPath} 프리팹을 찾을 수 없습니다. 프리팹이 Assets/Resources 아래에 있는지 확인하세요.");
+            return;
+        }
+
+        UnityEngine.Object.Instantiate(prefab);
+    }
+
+    // BGM/SFX DB도 다른 전투 DB와 같은 원칙 - 실제로 재생하기 전에 미리 불러 캐싱해둔다.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    public static void InitializeSoundDatabases()
+    {
+        BgmDatabase.EnsureLoaded();
+        SfxDatabase.EnsureLoaded();
+        AmbDatabase.EnsureLoaded();
+    }
+
+    // SoundManager는 InitializeSoundDatabases 이후에 생성되어야 한다 - PlayBgm/PlaySfx가
+    // 바로 DB를 읽을 수 있어야 하므로, 같은 클래스 내 선언 순서 규칙에 따라 아래에 둔다.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    public static void InitializeSoundManager()
+    {
+        if (SoundManager.Instance != null) return;
+
+        var prefab = Resources.Load<SoundManager>(SoundManagerPath);
+        if (prefab == null)
+        {
+            Debug.LogError($"Resources/{SoundManagerPath} 프리팹을 찾을 수 없습니다. 프리팹이 Assets/Resources 아래에 있는지 확인하세요.");
             return;
         }
 

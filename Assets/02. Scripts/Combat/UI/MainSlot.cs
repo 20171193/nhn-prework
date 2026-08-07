@@ -15,7 +15,11 @@ public class MainSlot : MonoBehaviour
 
     void Awake()
     {
-        GetComponent<Button>().onClick.AddListener(() => expandPanel.gameObject.SetActive(!expandPanel.gameObject.activeSelf));
+        GetComponent<Button>().onClick.AddListener(() =>
+        {
+            SoundManager.Instance?.PlaySfxUI(SfxId.ClickNormalBTN);
+            expandPanel.gameObject.SetActive(!expandPanel.gameObject.activeSelf);
+        });
         expandPanel.gameObject.SetActive(false);
     }
 

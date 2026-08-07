@@ -23,6 +23,10 @@ public class PlayerMovementController : MonoBehaviourPun
     Vector2 moveDir;
     bool isMoving; // 로컬은 매 프레임 직접 세팅, 원격은 RpcSetMoving으로만 바뀐다.
 
+    // 발소리 - IsMoving과 같은 조건으로 루프 재생/정지된다. 플레이어 위치에 종속된
+    // 사운드라 SoundManager의 공용 풀이 아니라 이 오브젝트가 직접 AudioSource를 들고 있는다.
+    AudioSource footstepSource;
+
     void Awake()
     {
         combatContext = GetComponent<PlayerCombatContext>();
@@ -31,6 +35,27 @@ public class PlayerMovementController : MonoBehaviourPun
 
         if (obstacleMask.value == 0)
             obstacleMask = LayerMask.GetMask("Obstacle");
+
+        SetupFootstepSource();
+    }
+
+    void SetupFootstepSource()
+    {
+        footstepSource = gameObject.AddComponent<AudioSource>();
+        footstepSource.playOnAwake = false;
+        footstepSource.loop = true;
+        footstepSource.spatialBlend = 1f; // 위치 기반 3D - 거리 감쇠 적용
+
+        if (SoundManager.Instance != null)
+            footstepSource.outputAudioMixerGroup = SoundManager.Instance.SfxMixerGroup;
+
+        if (SfxDatabase.Instance != null && SfxDatabase.Instance.TryGet((int)SfxId.PlayerMove, out var data) && data.clip != null)
+        {
+            footstepSource.clip = data.clip;
+            footstepSource.volume = data.volume;
+            footstepSource.minDistance = data.minDistance;
+            footstepSource.maxDistance = data.maxDistance;
+        }
     }
 
     void Update()
@@ -70,6 +95,7 @@ public class PlayerMovementController : MonoBehaviourPun
         if (nowMoving != isMoving)
         {
             isMoving = nowMoving;
+            SetFootstepPlaying(nowMoving);
             photonView.RPC(nameof(RpcSetMoving), RpcTarget.Others, isMoving);
         }
     }
@@ -78,6 +104,15 @@ public class PlayerMovementController : MonoBehaviourPun
     void RpcSetMoving(bool moving)
     {
         bodyAnimator.SetBool("IsMoving", moving);
+        SetFootstepPlaying(moving);
+    }
+
+    void SetFootstepPlaying(bool playing)
+    {
+        if (footstepSource.clip == null) return;
+
+        if (playing && !footstepSource.isPlaying) footstepSource.Play();
+        else if (!playing && footstepSource.isPlaying) footstepSource.Stop();
     }
 
     Vector2 MoveAxis(Vector2 from, Vector2 axisDelta)

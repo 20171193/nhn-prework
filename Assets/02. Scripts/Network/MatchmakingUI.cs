@@ -32,6 +32,8 @@ public class MatchmakingUI : MonoBehaviour
 
         findMatchButton.onClick.AddListener(matchmaking.FindMatch);
         cancelButton.onClick.AddListener(matchmaking.CancelSearch);
+        findMatchButton.onClick.AddListener(PlayClickSound);
+        cancelButton.onClick.AddListener(PlayClickSound);
 
         OnStateChanged(matchmaking.State);
         OnStatusChanged("대기 중");
@@ -47,7 +49,11 @@ public class MatchmakingUI : MonoBehaviour
 
         if (findMatchButton != null) findMatchButton.onClick.RemoveListener(matchmaking.FindMatch);
         if (cancelButton != null) cancelButton.onClick.RemoveListener(matchmaking.CancelSearch);
+        if (findMatchButton != null) findMatchButton.onClick.RemoveListener(PlayClickSound);
+        if (cancelButton != null) cancelButton.onClick.RemoveListener(PlayClickSound);
     }
+
+    static void PlayClickSound() => SoundManager.Instance?.PlaySfxUI(SfxId.ClickNormalBTN);
 
     void OnStateChanged(MatchmakingState state)
     {

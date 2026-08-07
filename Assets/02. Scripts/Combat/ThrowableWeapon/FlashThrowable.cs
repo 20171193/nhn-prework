@@ -19,12 +19,16 @@ public class FlashThrowable : ThrowableObject
             if (view == null || !view.IsMine) continue;
 
             CombatNetworkManager.Instance?.PlayScreenFade(effectValue);
+            SoundManager.Instance?.PlaySfxUI(SfxId.FlashbangEffect); // 위치 무관, 맞은 로컬만
             break; // 로컬 플레이어는 하나뿐이라 한 번 찾으면 더 볼 필요 없음
         }
     }
 
     protected override void PlayTriggerAnimation()
     {
+        // Trigger()가 클라이언트마다 로컬로 독립 실행되므로, 여기서 재생해도 양쪽
+        // 클라이언트 모두 같은 타이밍에 터지는 소리가 들린다(GrenadeThrowable과 동일 원칙).
+        SoundManager.Instance?.PlaySfx(SfxId.FlashbangPop, transform.position);
         StartCoroutine(FlashRoutine());
     }
 

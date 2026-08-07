@@ -24,6 +24,9 @@ public class GrenadeThrowable : ThrowableObject
 
     protected override void PlayTriggerAnimation()
     {
+        // Trigger()가 클라이언트마다 완전히 로컬로(RPC 없이) 독립 실행되므로, 여기서
+        // 재생해도 양쪽 클라이언트 모두 같은 타이밍에 폭발음이 들린다.
+        SoundManager.Instance?.PlaySfx(SfxId.GrenadeExplode, transform.position);
         StartCoroutine(ExplodeRoutine());
     }
 

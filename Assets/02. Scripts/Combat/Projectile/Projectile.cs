@@ -43,17 +43,29 @@ public class Projectile : MonoBehaviour
         transform.position += (Vector3)(direction * speed * Time.deltaTime);
 
         if (Vector3.Distance(spawnPosition, transform.position) >= maxRange)
+        {
+            SoundManager.Instance?.PlaySfx(SfxId.BulletHitObstacle, transform.position);
             Release();
+        }
     }
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        // 맞은 대상이 이 클라이언트 소유(본인)일 때만 판정한다.
+        // PhotonView가 있다 = 플레이어를 맞혔다는 뜻 - 그쪽은 피격 사운드(PlayerDamaged)가
+        // 따로 있으니 여기서는 장애물(PhotonView 없는 대상)에 맞았을 때만 재생한다.
         var targetView = other.GetComponent<PhotonView>();
-        if (targetView != null && targetView.IsMine)
+        if (targetView != null)
         {
-            var damageable = other.GetComponent<IDamageable>();
-            damageable?.ApplyDamage(damage);
+            // 맞은 대상이 이 클라이언트 소유(본인)일 때만 판정한다.
+            if (targetView.IsMine)
+            {
+                var damageable = other.GetComponent<IDamageable>();
+                damageable?.ApplyDamage(damage);
+            }
+        }
+        else
+        {
+            SoundManager.Instance?.PlaySfx(SfxId.BulletHitObstacle, transform.position);
         }
 
         Release();

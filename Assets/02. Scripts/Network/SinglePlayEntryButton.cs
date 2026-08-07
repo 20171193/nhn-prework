@@ -1,7 +1,6 @@
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 // 로비의 싱글플레이 진입 버튼 전용. SingleGame 씬(SinglePlayOfflineSetup)은 OfflineMode를
 // 켜야 하는데, PUN2는 온라인으로 연결된 상태에서는 OfflineMode 전환을 거부한다.
@@ -23,13 +22,15 @@ public class SinglePlayEntryButton : MonoBehaviourPunCallbacks
 
     public void OnClickEnter()
     {
+        SoundManager.Instance?.PlaySfxUI(SfxId.ClickNormalBTN);
+
         var state = PhotonNetwork.NetworkClientState;
 
         // PeerCreated는 게임 시작 후 한 번도 접속을 시도한 적 없는 최초 상태라
         // Disconnected와 마찬가지로 온라인 연결이 전혀 없다 - 바로 진입해도 안전하다.
         if (state == ClientState.Disconnected || state == ClientState.PeerCreated)
         {
-            SceneManager.LoadScene(sceneName);
+            FadeManager.Instance.FadeAndLoad(sceneName);
             return;
         }
 
@@ -48,6 +49,6 @@ public class SinglePlayEntryButton : MonoBehaviourPunCallbacks
         if (!waitingForDisconnect) return;
 
         waitingForDisconnect = false;
-        SceneManager.LoadScene(sceneName);
+        FadeManager.Instance.FadeAndLoad(sceneName);
     }
 }
