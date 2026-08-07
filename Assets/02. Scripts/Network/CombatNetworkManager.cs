@@ -126,7 +126,7 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
         hud.Init(info, statsController, playerView.GetComponent<PlayerCombatContext>());
 
         EquipWeapon(playerView, info);
-        EquipThrowableWeapon(playerView);
+        EquipThrowableWeapon(playerView, info);
 
         // 투척무기 UI는 로컬 전용 - 상대방 쪽은 연결하지 않는다.
         if (!playerView.IsMine || throwableWeaponUIs == null) return;
@@ -156,17 +156,23 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
         playerView.GetComponent<PlayerCombatContext>().EquipWeapon(weaponData.prefab);
     }
 
-    // 테스트용: 정식 투척무기 선택 UI가 생기기 전까지, DB에 등록된 투척무기를 전부
-    // 슬롯 0/1/2에 순서대로 장착해준다(숫자키 1/2/3 전부 바로 테스트 가능하도록).
-    // 로컬/상대방 둘 다 동일하게 장착한다.
-    void EquipThrowableWeapon(PhotonView playerView)
+    // throwableWeaponId로 DB에서 기본 투척무기를 찾아 슬롯0에 장착한다. EquipWeapon과 같은 원칙 -
+    // 로컬/상대방 둘 다, 못 찾으면 첫 번째 투척무기로 대체한다. 슬롯1/2는 증강으로만 채워지는
+    // 영역이라 여기서 건드리지 않는다.
+    void EquipThrowableWeapon(PhotonView playerView, PlayerInfo info)
     {
         var throwableWeaponDatabase = ThrowableWeaponDatabase.Instance;
         if (throwableWeaponDatabase == null) return;
 
-        var controller = playerView.GetComponent<ThrowableWeaponController>();
-        for (int i = 0; i < throwableWeaponDatabase.entries.Count && i < 3; i++)
-            controller.Equip(i, throwableWeaponDatabase.entries[i]);
+        if (!throwableWeaponDatabase.TryGet(info.throwableWeaponId, out var weaponData))
+        {
+            Debug.LogWarning($"throwableWeaponId {info.throwableWeaponId}에 해당하는 투척무기를 찾지 못해 첫 번째 투척무기로 대체합니다.", this);
+            weaponData = throwableWeaponDatabase.entries.Count > 0 ? throwableWeaponDatabase.entries[0] : null;
+        }
+
+        if (weaponData == null) return;
+
+        playerView.GetComponent<ThrowableWeaponController>().Equip(0, weaponData);
     }
 
     // 섬광탄에 맞은 로컬 플레이어의 화면을 밝게 한다(FlashThrowable이 호출).

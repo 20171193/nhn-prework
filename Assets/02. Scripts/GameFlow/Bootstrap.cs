@@ -13,6 +13,7 @@ public static class Bootstrap
     // Assets/Resources 기준 경로. 확장자 없이 이름만 쓴다.
     const string GameManagerPath = "GameManager";
     const string CursorManagerPath = "CursorManager";
+    const string LobbyPlayerSetupPath = "LobbyPlayerSetup";
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void Initialize()
@@ -58,5 +59,23 @@ public static class Bootstrap
         WeaponDatabase.EnsureLoaded();
         ProjectileDatabase.EnsureLoaded();
         ThrowableWeaponDatabase.EnsureLoaded();
+    }
+
+    // LobbyPlayerSetup.Awake가 WeaponDatabase/ThrowableWeaponDatabase.Instance.entries를 바로
+    // 읽으므로, InitializeCombatDatabases가 먼저 끝나 있어야 한다 - 같은 클래스 내
+    // RuntimeInitializeOnLoadMethod는 선언 순서대로 실행되므로 일부러 그 아래에 선언한다.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    public static void InitializeLobbyPlayerSetup()
+    {
+        if (LobbyPlayerSetup.Instance != null) return;
+
+        var prefab = Resources.Load<LobbyPlayerSetup>(LobbyPlayerSetupPath);
+        if (prefab == null)
+        {
+            Debug.LogError($"Resources/{LobbyPlayerSetupPath} 프리팹을 찾을 수 없습니다. 프리팹이 Assets/Resources 아래에 있는지 확인하세요.");
+            return;
+        }
+
+        UnityEngine.Object.Instantiate(prefab);
     }
 }
