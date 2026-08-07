@@ -197,7 +197,8 @@ MonoBehaviour:
   winnerLabel: {fileID: 7179338782590410196}
   outcomeLabel: {fileID: 3684227438201681125}
   returnLabel: {fileID: 581482345733704467}
-  winnerFormat: "\uD50C\uB808\uC774\uC5B4 {0} \uC2B9\uB9AC"
+  winnerLabelFormat: "{0} \uC2B9\uB9AC"
+  unknownNameFormat: "\uD50C\uB808\uC774\uC5B4 {0}"
   drawText: "\uBB34\uC2B9\uBD80"
   localWinText: "\uC2B9\uB9AC!"
   localLoseText: "\uD328\uBC30"

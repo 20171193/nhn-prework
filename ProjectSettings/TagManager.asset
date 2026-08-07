@@ -53,3 +53,6 @@ TagManager:
   - name: VisualObstacle
     uniqueID: 2739441473
     locked: 0
+  - name: UI
+    uniqueID: 2247988001
+    locked: 0

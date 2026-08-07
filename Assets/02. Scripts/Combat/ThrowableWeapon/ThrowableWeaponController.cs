@@ -14,7 +14,7 @@ public class ThrowableWeaponController : MonoBehaviourPun
     public PlayerAimController aim;
 
     static readonly KeyCode[] SlotKeys = { KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3 };
-    const int SlotCount = 3;
+    public const int SlotCount = 3;
 
     // 슬롯에 장착된 ThrowableWeaponData가 없을 때 쓰는 폴백 기본값.
     [SerializeField] float cooldown = 10f;
@@ -102,6 +102,31 @@ public class ThrowableWeaponController : MonoBehaviourPun
     }
 
     public bool IsSlotUnlocked(int slotIndex) => slots[slotIndex].unlocked;
+
+    // 이 투척무기를 이미 어느 슬롯에든 갖고 있는지. 증강(ThrowableAugmentData)이
+    // "아직 없는 것"만 골라 주기 위해 확인할 때 쓴다.
+    public bool Owns(int throwableWeaponId)
+    {
+        for (int i = 0; i < SlotCount; i++)
+        {
+            if (slots[i].unlocked && slots[i].weaponData != null && slots[i].weaponData.id == throwableWeaponId)
+                return true;
+        }
+
+        return false;
+    }
+
+    // 아직 잠겨 있는 첫 슬롯의 인덱스. 세 슬롯이 다 찼으면 -1.
+    public int FirstEmptySlotIndex()
+    {
+        for (int i = 0; i < SlotCount; i++)
+        {
+            if (!slots[i].unlocked) return i;
+        }
+
+        return -1;
+    }
+
     public ThrowableWeaponData GetWeaponData(int slotIndex) => slots[slotIndex].weaponData;
     public float GetCooldownRate(int slotIndex) => slots[slotIndex].cooldownRemaining / SlotCooldown(slotIndex);
 

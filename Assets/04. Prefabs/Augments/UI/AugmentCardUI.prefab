@@ -412,7 +412,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 82838c1744edf354b8ad74dff0d3a0f9, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 1857e11155871864cba8c9286594f680, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -489,6 +489,7 @@ MonoBehaviour:
   augmentData: {fileID: 0}
   augmentNameText: {fileID: 8644638420963825299}
   augmentDescriptionText: {fileID: 2764403773412522240}
+  iconImage: {fileID: 934334871415889556}
   rerollButton: {fileID: 2384055646365596457}
   flipDuration: 0.4
 --- !u!1 &7079370474244668943
