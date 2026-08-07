@@ -5,6 +5,8 @@ using UnityEngine;
 [RequireComponent(typeof(WeaponController))]
 public class PlayerWeaponFireController : MonoBehaviour
 {
+    public Animator weaponAnimator; // 발사 애니메이션 트리거는 PlayerCombatContext.RpcFireVolley가 켠다(양쪽 클라이언트 모두 실행되므로).
+
     PlayerAimController aim;
     WeaponController weapon;
     PlayerCombatContext combatContext;

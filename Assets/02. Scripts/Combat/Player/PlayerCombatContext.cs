@@ -17,6 +17,7 @@ public class PlayerCombatContext : MonoBehaviourPun
 {
     public PlayerStatsController playerStatsController;
     public WeaponController weaponController;
+    PlayerWeaponFireController fireController; // weaponController와 같은 무기 인스턴스에 붙어있다 - EquipWeapon에서 함께 캐싱.
     // 증강으로 투척무기 슬롯을 잠금해제할 때 씀 (context.throwableWeaponController.Equip(i, data)).
     [FormerlySerializedAs("throwableSkillController")]
     public ThrowableWeaponController throwableWeaponController;
@@ -93,6 +94,7 @@ public class PlayerCombatContext : MonoBehaviourPun
     {
         var instance = Instantiate(weaponPrefab, weaponSocket);
         weaponController = instance.GetComponent<WeaponController>();
+        fireController = instance.GetComponent<PlayerWeaponFireController>();
         Recalculate();
     }
 
@@ -117,6 +119,8 @@ public class PlayerCombatContext : MonoBehaviourPun
             var proj = ProjectilePool.Get(projectileData.prefab, muzzlePosition, Quaternion.identity);
             proj.GetComponent<Projectile>().Init(dir, speed, damage, range, hitCollider);
         }
+
+        fireController?.weaponAnimator.SetTrigger("OnFire");
     }
 
     // FireVolley와 같은 패턴 - 투척도 RPC로 전파하고, 각 클라이언트가 로컬로 독립 재생한다.
