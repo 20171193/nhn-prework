@@ -33,6 +33,7 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
     {
         panel.enabled = false;
         SetWaitingForOthers(false);
+        AssignRenderCamera();
     }
 
     private void OnEnable()
@@ -51,6 +52,10 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
     {
         this.manager = manager;
         this.onChosen = onChosen;
+
+        // 이 화면은 GameManager가 만들어 씬을 넘어 살아남는다. 전투 씬이 새로 로드되면
+        // Awake 때 잡아둔 카메라는 이미 파괴돼 있으므로, 열 때마다 지금 씬의 것으로 다시 맞춘다.
+        AssignRenderCamera();
 
         panel.enabled = true;
         // 지난 회차에 띄운 대기 표시를 걷어내고 새로 연다.
@@ -138,6 +143,35 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
     // 혼자면 기다릴 상대가 없다. 흐름 테스트 씬처럼 방 밖에서 도는 경우도 여기서 걸러진다.
     private bool HasOpponent() => GameManager.Instance != null && GameManager.Instance.HasOpponent;
 
+    // Screen Space - Camera 캔버스에 렌더 카메라를 꽂아준다.
+    //
+    // 이 모드에서만 캔버스가 카메라의 렌더 패스 안에서 그려지고, 그래야 캔버스 소속이 아닌
+    // 렌더러(로프 타이머의 불꽃 파티클 등)를 UI와 같이 화면에 올릴 수 있다.
+    // Overlay는 카메라가 다 그린 뒤에 따로 합성하는 방식이라 파티클이 낄 자리가 없다.
+    //
+    // 이 값을 인스펙터에서 미리 꽂아둘 수 없는 이유: 프리팹은 씬 오브젝트를 참조로 들 수 없다.
+    // 비워두면(m_Camera: 0) 유니티가 Overlay처럼 그려버려서, 파티클은 카메라가 보지 않는
+    // 좌표(캔버스 rect는 화면 픽셀 크기의 월드 공간에 있다)에 그려진 채 게임 뷰에서 사라진다.
+    private void AssignRenderCamera()
+    {
+        var renderCamera = Camera.main;
+
+        // panel과 대기 표시가 각자 Canvas를 갖는 구조라 한 번에 훑는다(꺼져 있는 것도 포함).
+        foreach (var canvas in GetComponentsInChildren<Canvas>(true))
+        {
+            if (canvas.worldCamera == renderCamera) continue;
+
+            if (renderCamera == null)
+            {
+                Debug.LogWarning($"MainCamera 태그가 붙은 카메라를 찾지 못했습니다. " +
+                                 $"{canvas.name}이 Overlay처럼 그려져 파티클이 게임 뷰에 보이지 않습니다.", canvas);
+                continue;
+            }
+
+            canvas.worldCamera = renderCamera;
+        }
+    }
+
     private void SetWaitingForOthers(bool waiting)
     {
         if (waitingForOthersPanel == null) return;
@@ -152,6 +186,12 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
     {
         if (countdown != null) StopCoroutine(countdown);
         countdown = null;
+
+        // 로프를 다 탄 상태로 만들어 불꽃 오브젝트까지 꺼둔다(RopeTimerUI.PlaceFlame이 SetActive로 끈다).
+        // panel.enabled만 끄면 캔버스 그래픽만 사라지고, 캔버스 소속이 아닌 불꽃 파티클은
+        // 계속 화면에 남아 탄다. 시간 초과로 닫히는 경우와 달리 카드를 일찍 고르면
+        // progress가 0에 닿지 않은 채로 닫히기 때문에 여기서 직접 정리해준다.
+        if (ropeTimer != null) ropeTimer.SetProgress(0f);
 
         for (int i = 0; i < cards.Count; i++)
         {
