@@ -4,7 +4,6 @@ using Photon.Pun;
 using Photon.Realtime;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 // 1:1 대전 테스트용 연결/매칭 관리자.
 // 고정 방 이름으로 접속해 2명이 모이면 각자 스폰 지점에서 NetworkPlayer를 생성한다.
@@ -87,6 +86,12 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
             GameManager.Instance.MatchEnded += OnMatchEnded;
         else
             Debug.LogError("GameManager가 없어 매치 종료 후 로비로 돌아갈 수 없습니다.", this);
+
+        // 사운드는 부가 연출이라 스폰/매치종료 구독 등 핵심 로직보다 뒤에 둔다 - 혹시 사운드
+        // 쪽에서 예외가 나도(DB 미로드 등) 핵심 흐름은 이미 끝난 뒤라 영향받지 않는다.
+        // 멀티/싱글 양쪽 다 이 매니저를 거치므로, 게임 씬 진입 훅으로 그대로 쓴다.
+        SoundManager.Instance?.PlayBgm(BgmId.InGame);
+        SoundManager.Instance?.StartAmbLoop(AmbId.InGameAmbience);
 
         // 매치메이킹 씬(MatchmakingManager)을 거쳐 들어오면 이미 방에 들어와 있는 상태로
         // 이 씬이 로드된다. 씬 로드로 진입한 경우 OnJoinedRoom이 다시 오지 않으므로
@@ -258,25 +263,27 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
 
         SetStatus("로비로 돌아갑니다...");
 
-        // 방을 먼저 나가고, 나간 것이 확인되면(OnLeftRoom) 씬을 옮긴다.
-        // AutomaticallySyncScene이 켜져 있어서, 방에 남은 채로 씬을 옮기면 상대까지 끌고 간다.
-        if (PhotonNetwork.InRoom)
+        // 방만 나가고 마스터 서버 연결은 유지하면, 로비에 도착해도 여전히 같은 상대와
+        // "매칭된" 것과 다름없는 상태로 남는다(AutomaticallySyncScene이 켜져 있어서
+        // 방에 남은 채로 씬만 옮기면 상대까지 끌고 가는 문제도 있음). 매치가 끝나면
+        // 연결 자체를 완전히 끊어서 로비에 깨끗한 상태로 들어가야 한다 - 재매칭도
+        // 새로 시작해야 정상이다. 이어지는 처리는 OnDisconnected에서.
+        if (PhotonNetwork.IsConnected)
         {
-            PhotonNetwork.LeaveRoom();
+            PhotonNetwork.Disconnect();
             yield break;
         }
 
-        // 이 씬을 단독으로 실행해 방에 들어간 적이 없는 경우. 나갈 방이 없으니 바로 옮긴다.
-        LoadLobby();
-    }
-
-    public override void OnLeftRoom()
-    {
+        // 이 씬을 단독으로 실행해 연결한 적이 없는 경우. 끊을 연결이 없으니 바로 옮긴다.
         LoadLobby();
     }
 
     // 싱글플레이 씬의 "로비로" 버튼이 직접 호출한다.
-    public void ReturnToLobby() => LoadLobby();
+    public void ReturnToLobby()
+    {
+        SoundManager.Instance?.PlaySfxUI(SfxId.ClickNormalBTN);
+        LoadLobby();
+    }
 
     void LoadLobby()
     {
@@ -292,7 +299,10 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
         // 로비의 실제 매칭(JoinRandomRoom 등)이 전부 오프라인 취급돼 실패한다 - 여기서 반드시 끈다.
         PhotonNetwork.OfflineMode = false;
 
-        SceneManager.LoadScene(lobbySceneName);
+        // 게임 씬 전용 환경음이 로비까지 계속 재생되면 안 된다.
+        SoundManager.Instance?.StopAmbLoop();
+
+        FadeManager.Instance.FadeAndLoad(lobbySceneName);
     }
 
     public override void OnPlayerLeftRoom(Player otherPlayer)
@@ -313,6 +323,9 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
     public override void OnDisconnected(DisconnectCause cause)
     {
         SetStatus($"Disconnected: {cause}");
+
+        if (!IsReturningToLobby) return; // 매치 종료 흐름이 아닌 다른 이유의 연결 끊김은 무시
+        LoadLobby();
     }
 
     void SetStatus(string message)
