@@ -27,6 +27,12 @@ public class PlayerHUD : MonoBehaviour
     {
         nameTXT.text = info.playerName;
 
+        // 증강 슬롯은 매치 시작 기준으로 전부 잠긴 상태에서 시작한다. Init이 두 번 불려도
+        // (상대가 나갔다 다시 들어오는 등) 지난 판의 아이콘이 남지 않도록 여기서 되돌린다.
+        nextAugmentSlotIndex = 0;
+        foreach (var slot in acquiredAugmentSlots)
+            slot.Init();
+
         statsController = stats;
         statsController.OnHpChanged += UpdateHpBar;
         UpdateHpBar(stats.Stats.currentHp, stats.Stats.maxHp); // 구독 시점 기준 현재값으로 1회 초기화

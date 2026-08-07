@@ -24,6 +24,10 @@ public abstract class AugmentData : ScriptableObject, IAugmentEffect, IHasId
     [TextArea] public string description;
     public AugmentTier tier;
 
+    [Header("Sprites")] 
+    public Sprite bigIcon;
+    public Sprite smallIcon;
+
     public abstract void Apply(PlayerCombatContext context);
 
     // 지금 이 플레이어에게 선택지로 내놓을 만한 증강인지. AugmentPool이 뽑기 전에 물어본다.

@@ -16,6 +16,7 @@ public class AugmentCardUI : MonoBehaviour, IPointerDownHandler, IPointerEnterHa
     [SerializeField] private AugmentData augmentData;
     public TextMeshProUGUI augmentNameText;
     public TextMeshProUGUI augmentDescriptionText;
+    public Image iconImage;
 
     // 슬롯마다 라운드당 한 번 쓸 수 있는 리롤 버튼.
     public Button rerollButton;
@@ -66,6 +67,19 @@ public class AugmentCardUI : MonoBehaviour, IPointerDownHandler, IPointerEnterHa
         augmentData = data;
         augmentNameText.text = data.augmentName;
         augmentDescriptionText.text = data.description;
+        SetIcon(data.bigIcon);
+    }
+
+    // 카드에는 큰 아이콘(bigIcon)을 쓴다. HUD의 획득 슬롯은 같은 증강의 smallIcon을 쓴다.
+    // 아이콘이 없는 증강이면 이미지를 꺼둔다 - 그냥 두면 리롤 직전 카드의 그림이 그대로 남아
+    // 다른 증강의 아이콘을 달고 있는 것처럼 보인다.
+    // 선택지는 라운드마다 다시 뽑히므로 여기서는 경고를 남기지 않는다(로그가 매번 쌓인다).
+    private void SetIcon(Sprite icon)
+    {
+        if (iconImage == null) return;
+
+        iconImage.sprite = icon;
+        iconImage.enabled = icon != null;
     }
 
     public void SetRerollAvailable(bool available)

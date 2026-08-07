@@ -25,9 +25,16 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
              "panel과 형제로 두고 자체 Canvas를 갖게 하거나, 다른 Canvas 아래에 두어야 한다.")]
     public GameObject waitingForOthersPanel;
 
+    [Tooltip("Screen Space - Camera 캔버스를 올려둘 정렬 레이어. 불꽃 파티클도 같은 레이어에 두고 " +
+             "Order in Layer를 캔버스의 Sort Order보다 크게 잡아야 UI 위로 올라온다.\n" +
+             "비워두면 캔버스의 정렬 레이어를 건드리지 않는다.")]
+    [SerializeField] private string sortingLayerName = "UI";
+
     AugmentManager manager;
     Action<AugmentData> onChosen;
     Coroutine countdown;
+    // 없는 정렬 레이어를 가리키고 있을 때 경고를 매번 쏟지 않도록(화면은 라운드마다 열린다).
+    bool sortingLayerWarned;
 
     private void Awake()
     {
@@ -155,12 +162,11 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
     private void AssignRenderCamera()
     {
         var renderCamera = Camera.main;
+        bool sortingLayerReady = CheckSortingLayer();
 
         // panel과 대기 표시가 각자 Canvas를 갖는 구조라 한 번에 훑는다(꺼져 있는 것도 포함).
         foreach (var canvas in GetComponentsInChildren<Canvas>(true))
         {
-            if (canvas.worldCamera == renderCamera) continue;
-
             if (renderCamera == null)
             {
                 Debug.LogWarning($"MainCamera 태그가 붙은 카메라를 찾지 못했습니다. " +
@@ -168,8 +174,34 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
                 continue;
             }
 
-            canvas.worldCamera = renderCamera;
+            // 카메라는 이미 같은 것이면 다시 꽂지 않는다. 정렬 레이어는 그와 별개로 매번 확인한다 -
+            // 카메라만 보고 건너뛰면 두 번째 라운드부터는 레이어를 영영 못 맞춘다.
+            if (canvas.worldCamera != renderCamera) canvas.worldCamera = renderCamera;
+
+            if (sortingLayerReady) canvas.sortingLayerName = sortingLayerName;
         }
+    }
+
+    // 정렬 레이어는 이 캔버스가 카메라가 그리는 다른 렌더러들 사이 어디에 설지를 정한다.
+    // 없는 이름을 넣으면 유니티가 조용히 무시하므로(오류도 안 난다) 먼저 있는지 확인하고,
+    // 없으면 왜 안 먹었는지 한 번 알려준다.
+    private bool CheckSortingLayer()
+    {
+        if (string.IsNullOrEmpty(sortingLayerName)) return false;
+
+        foreach (var layer in SortingLayer.layers)
+        {
+            if (layer.name == sortingLayerName) return true;
+        }
+
+        if (!sortingLayerWarned)
+        {
+            sortingLayerWarned = true;
+            Debug.LogWarning($"'{sortingLayerName}' 정렬 레이어가 없어 캔버스 정렬 레이어를 그대로 둡니다. " +
+                             "Project Settings > Tags and Layers > Sorting Layers에 추가하세요.", this);
+        }
+
+        return false;
     }
 
     private void SetWaitingForOthers(bool waiting)
