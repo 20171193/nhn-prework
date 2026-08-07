@@ -1,4 +1,5 @@
 using System.Collections;
+using Cinemachine;
 using Photon.Pun;
 using Photon.Realtime;
 using TMPro;
@@ -26,6 +27,10 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
 
     public TMP_Text statusLabel;
     public Transform[] spawnPoints;
+
+    // 로컬 플레이어가 스폰되면 이 vcam의 Follow를 그 Transform으로 지정한다(ApplyPlayerSetup 참고).
+    // 씬에 미리 드래그해둘 수 없는 이유는 Player가 PhotonNetwork.Instantiate로 런타임에 생기기 때문.
+    [SerializeField] private CinemachineVirtualCamera playerCamera;
 
     [Header("매치 종료 후")]
     [Tooltip("결과 화면을 띄우고 로비로 돌아가기까지 기다리는 시간(초).")]
@@ -160,6 +165,10 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
 
         EquipWeapon(playerView, info);
         EquipThrowableWeapon(playerView, info);
+
+        // 카메라도 로컬 전용 - 상대방 캐릭터를 따라가면 안 된다.
+        if (playerView.IsMine && playerCamera != null)
+            playerCamera.Follow = playerView.transform;
 
         // 투척무기 UI는 로컬 전용 - 상대방 쪽은 연결하지 않는다.
         if (!playerView.IsMine || throwableWeaponUIs == null) return;
