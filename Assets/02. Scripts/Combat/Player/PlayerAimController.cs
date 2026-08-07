@@ -31,6 +31,20 @@ public class PlayerAimController : MonoBehaviourPun
         cam = Camera.main;
     }
 
+    // 로컬 플레이어의 전투 씬 진입/퇴장 시점에 커서를 에임 모드로 바꿔준다.
+    // (증강 선택 등 InputEnabled가 꺼지는 구간은 별개 - 여기서는 다루지 않는다.)
+    void OnEnable()
+    {
+        if (!photonView.IsMine) return;
+        CursorManager.Instance?.SetMode(CursorMode.Aim);
+    }
+
+    void OnDisable()
+    {
+        if (!photonView.IsMine) return;
+        CursorManager.Instance?.SetMode(CursorMode.Default);
+    }
+
     void Update()
     {
         if (!photonView.IsMine || !combatContext.InputEnabled) return;

@@ -11,6 +11,7 @@ public class PlayerWeaponFireController : MonoBehaviour
     PhotonView ownerPhotonView;
     ThrowableWeaponController throwableWeapon;
     float fireTimer;
+    float cooldownDuration; // 방금 발사 시점 기준 재발사까지 걸리는 시간 - fireTimer와 함께 fill 계산에 쓴다.
 
     void Awake()
     {
@@ -32,8 +33,13 @@ public class PlayerWeaponFireController : MonoBehaviour
         if (Input.GetMouseButtonDown(0) && fireTimer <= 0f)
         {
             Fire();
-            fireTimer = combatContext.EffectiveAttackRate > 0f ? 1f / combatContext.EffectiveAttackRate : 0f;
+            cooldownDuration = combatContext.EffectiveAttackRate > 0f ? 1f / combatContext.EffectiveAttackRate : 0f;
+            fireTimer = cooldownDuration;
         }
+
+        // 커서의 공격 딜레이 fill - 0(방금 발사) ~ 1(발사 가능).
+        float delayFill = fireTimer > 0f && cooldownDuration > 0f ? 1f - fireTimer / cooldownDuration : 1f;
+        CursorManager.Instance?.SetAttackDelayFill(delayFill);
     }
 
     void Fire()

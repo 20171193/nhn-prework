@@ -12,6 +12,7 @@ public static class Bootstrap
 {
     // Assets/Resources 기준 경로. 확장자 없이 이름만 쓴다.
     const string GameManagerPath = "GameManager";
+    const string CursorManagerPath = "CursorManager";
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void Initialize()
@@ -28,6 +29,23 @@ public static class Bootstrap
         }
 
         // static 클래스라 MonoBehaviour의 Instantiate를 쓸 수 없다.
+        UnityEngine.Object.Instantiate(prefab);
+    }
+
+    // 게임 시작부터 OS 커서를 숨기고 커스텀 커서를 띄워야 하므로 GameManager와 동일하게
+    // 부팅 시점에 미리 만들어둔다(로비/게임룸 어느 씬으로 시작하든 항상 존재).
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    public static void InitializeCursorManager()
+    {
+        if (CursorManager.Instance != null) return;
+
+        var prefab = Resources.Load<CursorManager>(CursorManagerPath);
+        if (prefab == null)
+        {
+            Debug.LogError($"Resources/{CursorManagerPath} 프리팹을 찾을 수 없습니다. 프리팹이 Assets/Resources 아래에 있는지 확인하세요.");
+            return;
+        }
+
         UnityEngine.Object.Instantiate(prefab);
     }
 
