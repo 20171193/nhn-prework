@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Photon.Pun;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 // 증강 시스템이 실제로 붙는 지점. PlayerStats/WeaponStats/ProjectileStats의
 // base 값은 절대 직접 건드리지 않고, 증강은 AddModifier()로 목록에만 쌓는다.
@@ -17,6 +18,7 @@ public class PlayerCombatContext : MonoBehaviourPun
     public PlayerStatsController playerStatsController;
     public WeaponController weaponController;
     // 증강으로 투척무기 슬롯을 잠금해제할 때 씀 (context.throwableWeaponController.Equip(i, data)).
+    [FormerlySerializedAs("throwableSkillController")]
     public ThrowableWeaponController throwableWeaponController;
     public Collider2D hitCollider; // 이 플레이어를 맞힐 수 있는 콜라이더. 자신이 쏜 발사체가 이걸 무시하도록 넘겨줄 때 씀
 
@@ -136,11 +138,46 @@ public class PlayerCombatContext : MonoBehaviourPun
         obj.GetComponent<ThrowableObject>().Init(start, end, data);
     }
 
+    // Throw와 같은 패턴 - 에임 시작/슬롯 전환도 RPC로 전파해서 상대방 화면에도 총이
+    // 숨겨지고 투척무기를 든 모습이 보이게 한다. 로컬 자기 자신도 이 RPC를 통해서만
+    // 반영한다(직접 호출 X) - 그래야 로컬/원격이 항상 같은 경로로 같은 상태를 갖는다.
+    public void SetThrowablePreview(int throwableWeaponId)
+    {
+        photonView.RPC(nameof(RpcSetThrowablePreview), RpcTarget.All, throwableWeaponId);
+    }
+
+    [PunRPC]
+    void RpcSetThrowablePreview(int throwableWeaponId)
+    {
+        if (!ThrowableWeaponDatabase.Instance.TryGet(throwableWeaponId, out var data) || data.prefab == null)
+        {
+            Debug.LogWarning($"throwableWeaponId {throwableWeaponId}에 해당하는 투척무기를 찾지 못했습니다.", this);
+            return;
+        }
+
+        ShowThrowablePreview(data.prefab);
+    }
+
+    public void ClearThrowablePreview()
+    {
+        photonView.RPC(nameof(RpcClearThrowablePreview), RpcTarget.All);
+    }
+
+    [PunRPC]
+    void RpcClearThrowablePreview()
+    {
+        HideThrowablePreview();
+    }
+
     // 숫자키로 투척무기 에임에 들어갔을 때, 실제로 던지는 것과 같은 프리팹을 ProjectilePool에서
     // 꺼내 소켓에 붙여 미리보기로 보여준다(Instantiate 아님 - 실제 투척과 같은 풀 재사용).
     // 총 자체는 그대로 두고 스프라이트만 숨긴다.
-    public void ShowThrowablePreview(GameObject prefab)
+    void ShowThrowablePreview(GameObject prefab)
     {
+        // 슬롯 간 스왑처럼 미리보기가 이미 떠 있는 상태로 다시 불릴 수 있다 - 새로 꺼내기 전에
+        // 이전 미리보기부터 반납해야 소켓에 두 개가 겹치거나 이전 것이 안 꺼지는 문제가 없다.
+        ReleaseThrowablePreviewInstance();
+
         if (weaponController != null && weaponController.weaponSprite != null)
             weaponController.weaponSprite.enabled = false;
 
@@ -153,19 +190,23 @@ public class PlayerCombatContext : MonoBehaviourPun
         if (throwable != null) throwable.enabled = false; // 미리보기는 날아가는 로직이 돌면 안 됨
     }
 
-    public void HideThrowablePreview()
+    void HideThrowablePreview()
     {
-        if (throwablePreviewInstance != null)
-        {
-            var throwable = throwablePreviewInstance.GetComponent<ThrowableObject>();
-            if (throwable != null) throwable.enabled = true; // 다음에 이 인스턴스가 실제로 던져질 때를 대비해 원복
-
-            ProjectilePool.Release(throwablePreviewInstance);
-            throwablePreviewInstance = null;
-        }
+        ReleaseThrowablePreviewInstance();
 
         if (weaponController != null && weaponController.weaponSprite != null)
             weaponController.weaponSprite.enabled = true;
+    }
+
+    void ReleaseThrowablePreviewInstance()
+    {
+        if (throwablePreviewInstance == null) return;
+
+        var throwable = throwablePreviewInstance.GetComponent<ThrowableObject>();
+        if (throwable != null) throwable.enabled = true; // 다음에 이 인스턴스가 실제로 던져질 때를 대비해 원복
+
+        ProjectilePool.Release(throwablePreviewInstance);
+        throwablePreviewInstance = null;
     }
 
     // 증강 선택 UI(증강 개발자 쪽)가 플레이어가 고른 증강을 최종 확정할 때 호출하는 지점.

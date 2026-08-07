@@ -77,6 +77,8 @@ MonoBehaviour:
     m_Bits: 64
   minArcHeightRatio: 0.1
   maxArcHeightRatio: 0.4
+  model: {fileID: 5248978974808393168}
+  triggerEffect: {fileID: 4694408124884992259}
   animator: {fileID: 4256569528199023312}
   growTrigger: OnExpand
   shrinkTrigger: OnReduce

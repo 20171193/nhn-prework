@@ -19,6 +19,7 @@ public class ThrowableWeaponUI : MonoBehaviour
     {
         weaponIconImage.sprite =null;
         fillImage.sprite = null;
+        cooldownSlider.value = 0f;
 
         slotLockImage.gameObject.SetActive(true);
 

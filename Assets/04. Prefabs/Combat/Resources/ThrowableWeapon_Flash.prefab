@@ -245,5 +245,7 @@ MonoBehaviour:
     m_Bits: 64
   minArcHeightRatio: 0.1
   maxArcHeightRatio: 0.4
+  model: {fileID: 1763154591926172918}
+  triggerEffect: {fileID: 1076473614204357212}
   animator: {fileID: 5150348583936337845}
   flashTrigger: OnTrigger

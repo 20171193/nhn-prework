@@ -30,6 +30,10 @@ public class ThrowableWeaponController : MonoBehaviourPun
     PlayerCombatContext combatContext;
     readonly ThrowableSlot[] slots = new ThrowableSlot[SlotCount];
     int activeSlotIndex = -1;
+    // 던진 프레임에 activeSlotIndex를 바로 -1로 만들면, 같은 프레임에 PlayerWeaponFireController의
+    // Update가 이 컨트롤러보다 나중에 돌 경우 IsAiming이 이미 꺼진 걸로 보여 총알까지 같이 나간다.
+    // 실제 해제는 모든 Update가 끝난 뒤인 LateUpdate에서 하도록 미뤄서 이 프레임 동안은 계속 막는다.
+    bool pendingAimEnd;
 
     public bool IsAiming => activeSlotIndex >= 0;
     // 에임 중인 슬롯 기준으로, 현재 마우스가 투척 사거리 안에 있는지. UI(원 색깔 등)가 참고한다.
@@ -76,6 +80,14 @@ public class ThrowableWeaponController : MonoBehaviourPun
         }
     }
 
+    void LateUpdate()
+    {
+        if (!pendingAimEnd) return;
+
+        activeSlotIndex = -1;
+        pendingAimEnd = false;
+    }
+
     public bool IsSlotUnlocked(int slotIndex) => slots[slotIndex].unlocked;
     public ThrowableWeaponData GetWeaponData(int slotIndex) => slots[slotIndex].weaponData;
     public float GetCooldownRate(int slotIndex) => slots[slotIndex].cooldownRemaining / SlotCooldown(slotIndex);
@@ -97,7 +109,7 @@ public class ThrowableWeaponController : MonoBehaviourPun
 
         if (activeSlotIndex == slotIndex)
         {
-            combatContext.HideThrowablePreview();
+            combatContext.ClearThrowablePreview();
             activeSlotIndex = -1;
             return;
         }
@@ -105,7 +117,7 @@ public class ThrowableWeaponController : MonoBehaviourPun
         if (slots[slotIndex].cooldownRemaining > 0f) return;
 
         activeSlotIndex = slotIndex;
-        combatContext.ShowThrowablePreview(slots[slotIndex].weaponData.prefab);
+        combatContext.SetThrowablePreview(slots[slotIndex].weaponData.id);
     }
 
     void TryThrow()
@@ -117,9 +129,9 @@ public class ThrowableWeaponController : MonoBehaviourPun
         Vector3 start = combatContext.weaponController.muzzle.position;
         combatContext.Throw(start, ClampedTarget(start), data.id);
 
-        combatContext.HideThrowablePreview();
+        combatContext.ClearThrowablePreview();
         slots[activeSlotIndex].cooldownRemaining = SlotCooldown(activeSlotIndex);
-        activeSlotIndex = -1;
+        pendingAimEnd = true;
     }
 
     // ThrowRangeIndicator.DrawCurve와 동일한 "사거리 밖이면 경계로 클램프" 로직.

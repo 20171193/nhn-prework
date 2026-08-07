@@ -15,5 +15,8 @@ MonoBehaviour:
   id: 30002
   cooldown: 10
   range: 6
-  prefab: {fileID: 0}
+  triggerDelay: 1
+  effectRadius: 2
+  effectValue: 15
+  prefab: {fileID: 7153534321328222511, guid: 8fb8bf3e28384a54f8beaeac331e0fe1, type: 3}
   icon: {fileID: 21300000, guid: 236e4a4aa2ab0314fbc60bb3778efdc6, type: 3}

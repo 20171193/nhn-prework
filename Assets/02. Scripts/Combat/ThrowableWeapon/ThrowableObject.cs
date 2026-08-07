@@ -25,8 +25,43 @@ public abstract class ThrowableObject : MonoBehaviour
     float elapsed;
     float triggerDelay;
 
-    enum State { Traveling, Waiting }
+    // 자식 오브젝트 2개 - 평소엔 실제 투척물 모형만 보이고, 트리거(폭발/발동) 되는 순간
+    // 그게 꺼지고 애니메이션 연출용 오브젝트가 대신 보인다. 둘이 동시에 켜져있는 시점은 없어야 한다.
+    [SerializeField] GameObject model;
+    [SerializeField] GameObject triggerEffect;
+
+    // 트리거 애니메이션 재생 중에만 영향 범위를 보여주는 디버그용 원. Debug.DrawRay는 Gizmos
+    // 파이프라인을 타서 렌더 파이프라인/뷰 설정에 따라 Game 뷰에 안 보이는 경우가 있어,
+    // 실제로 렌더링되는 LineRenderer로 대체했다 - 코드로만 생성해서 별도 프리팹 연결이 필요 없다.
+    LineRenderer effectRangeLine;
+
+    enum State { Traveling, Waiting, Triggered }
     State state;
+
+    void Awake()
+    {
+        var lineObj = new GameObject("EffectRangeDebug");
+        lineObj.transform.SetParent(transform, false);
+
+        effectRangeLine = lineObj.AddComponent<LineRenderer>();
+        effectRangeLine.useWorldSpace = false;
+        effectRangeLine.loop = true;
+        effectRangeLine.widthMultiplier = 0.05f;
+        effectRangeLine.material = new Material(Shader.Find("Sprites/Default"));
+        effectRangeLine.startColor = Color.red;
+        effectRangeLine.endColor = Color.red;
+        effectRangeLine.enabled = false;
+    }
+
+    // Get()으로 풀에서 꺼내질 때마다(SetActive(true) 직후) 항상 불린다 - 실제 투척(Init 뒤이어 호출)
+    // 뿐 아니라 미리보기(Init을 안 부르고 컴포넌트만 꺼서 재사용)도 이 경로를 타므로,
+    // 이전 사용에서 트리거된 채로 남아있던 연출 상태를 여기서 초기화해야 미리보기에
+    // 폭발 마지막 프레임이 그대로 남아 보이는 문제가 없다.
+    void OnEnable()
+    {
+        SetVisual(triggered: false);
+        effectRangeLine.enabled = false;
+    }
 
     public void Init(Vector3 start, Vector3 end, ThrowableWeaponData data)
     {
@@ -43,10 +78,31 @@ public abstract class ThrowableObject : MonoBehaviour
         transform.position = start;
     }
 
+    void SetVisual(bool triggered)
+    {
+        if (model != null) model.SetActive(!triggered);
+        if (triggerEffect != null) triggerEffect.SetActive(triggered);
+    }
+
     void Update()
     {
         if (state == State.Traveling) UpdateTravel();
-        else UpdateWait();
+        else if (state == State.Waiting) UpdateWait();
+    }
+
+    // 트리거 시점에 한 번만 그린다 - 위치/반경이 이후로 안 바뀌므로 매 프레임 다시 그릴 필요가 없다.
+    // 애니메이션이 끝나 ReturnToPool로 오브젝트가 비활성화되면 자식인 이 LineRenderer도 같이
+    // 꺼지고, 다음 재사용 시 OnEnable에서 다시 off로 초기화된다.
+    void DrawEffectRadiusDebug()
+    {
+        const int segments = 24;
+        effectRangeLine.positionCount = segments;
+        for (int i = 0; i < segments; i++)
+        {
+            float angle = i / (float)segments * Mathf.PI * 2f;
+            effectRangeLine.SetPosition(i, new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * effectRadius);
+        }
+        effectRangeLine.enabled = true;
     }
 
     void UpdateTravel()
@@ -81,6 +137,11 @@ public abstract class ThrowableObject : MonoBehaviour
 
     void Trigger()
     {
+        state = State.Triggered; // 한 번만 발동되도록 - 안 바꾸면 매 프레임 재호출되어 효과/애니메이션이 반복 재생됨
+
+        SetVisual(triggered: true);
+        DrawEffectRadiusDebug();
+
         var hits = Physics2D.OverlapCircleAll(transform.position, effectRadius, playerLayer);
         ApplyEffect(hits);
         PlayTriggerAnimation();

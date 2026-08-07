@@ -1,12 +1,14 @@
 using Photon.Pun;
 using UnityEngine;
+using UnityEngine.Serialization;
 
-// 투척 스킬 에임 중에 두 가지를 같이 보여준다.
+// 투척무기 에임 중에 두 가지를 같이 보여준다.
 // 1. 플레이어 위치 기준 원 - 마우스 좌표와 무관한 전체 사거리(기존 로직 그대로)
 // 2. muzzle -> 마우스 방향 포물선 - 지금 조준하면 실제로 어디로 날아갈지 궤적 미리보기
 // WeaponRangeIndicator와 같은 원칙으로, 원격 플레이어(IsMine이 아님)는 그리지 않는다.
 public class ThrowRangeIndicator : MonoBehaviour
 {
+    [FormerlySerializedAs("skill")]
     public ThrowableWeaponController throwableWeapon;
 
     [Header("범위 원 (플레이어 기준)")]
