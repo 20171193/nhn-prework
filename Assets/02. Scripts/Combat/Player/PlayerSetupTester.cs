@@ -7,11 +7,13 @@ public class PlayerSetupTester : MonoBehaviour
     [SerializeField] private string playerName;
     [SerializeField] private int profileIconId;
     [SerializeField] private int weaponId;
+    [SerializeField] private int throwableWeaponId;
 
     void Awake()
     {
-        LocalPlayerSetup.SetName(playerName);
-        LocalPlayerSetup.SetProfileIcon(profileIconId);
-        LocalPlayerSetup.SetWeapon(weaponId);
+        PlayData.SetName(playerName);
+        PlayData.SetProfileIcon(profileIconId);
+        PlayData.SetWeapon(weaponId);
+        PlayData.SetThrowableWeapon(throwableWeaponId);
     }
 }

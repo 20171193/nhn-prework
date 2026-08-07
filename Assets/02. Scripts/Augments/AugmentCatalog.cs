@@ -8,4 +8,19 @@ public class AugmentCatalog : ScriptableObject
     public List<AugmentData> Augments = new List<AugmentData>();
 
     public int Count => Augments.Count;
+
+    public bool TryGet(int id, out AugmentData data)
+    {
+        foreach (var augment in Augments)
+        {
+            if (augment != null && augment.Id == id)
+            {
+                data = augment;
+                return true;
+            }
+        }
+
+        data = null;
+        return false;
+    }
 }

@@ -12,6 +12,8 @@ public static class Bootstrap
 {
     // Assets/Resources 기준 경로. 확장자 없이 이름만 쓴다.
     const string GameManagerPath = "GameManager";
+    const string CursorManagerPath = "CursorManager";
+    const string LobbyPlayerSetupPath = "LobbyPlayerSetup";
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void Initialize()
@@ -28,6 +30,52 @@ public static class Bootstrap
         }
 
         // static 클래스라 MonoBehaviour의 Instantiate를 쓸 수 없다.
+        UnityEngine.Object.Instantiate(prefab);
+    }
+
+    // 게임 시작부터 OS 커서를 숨기고 커스텀 커서를 띄워야 하므로 GameManager와 동일하게
+    // 부팅 시점에 미리 만들어둔다(로비/게임룸 어느 씬으로 시작하든 항상 존재).
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    public static void InitializeCursorManager()
+    {
+        if (CursorManager.Instance != null) return;
+
+        var prefab = Resources.Load<CursorManager>(CursorManagerPath);
+        if (prefab == null)
+        {
+            Debug.LogError($"Resources/{CursorManagerPath} 프리팹을 찾을 수 없습니다. 프리팹이 Assets/Resources 아래에 있는지 확인하세요.");
+            return;
+        }
+
+        UnityEngine.Object.Instantiate(prefab);
+    }
+
+    // 전투 데이터 DB(Weapon/Projectile/ThrowableWeapon)도 게임 시작 시 한 번만 Resources에서 불러
+    // static Instance에 캐싱해둔다. 인게임 중에 처음 발사/장착하는 순간 로딩 비용이
+    // 튀지 않도록, 실제로 쓰이기 훨씬 전인 부팅 시점에 미리 끝내두는 것.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    public static void InitializeCombatDatabases()
+    {
+        WeaponDatabase.EnsureLoaded();
+        ProjectileDatabase.EnsureLoaded();
+        ThrowableWeaponDatabase.EnsureLoaded();
+    }
+
+    // LobbyPlayerSetup.Awake가 WeaponDatabase/ThrowableWeaponDatabase.Instance.entries를 바로
+    // 읽으므로, InitializeCombatDatabases가 먼저 끝나 있어야 한다 - 같은 클래스 내
+    // RuntimeInitializeOnLoadMethod는 선언 순서대로 실행되므로 일부러 그 아래에 선언한다.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    public static void InitializeLobbyPlayerSetup()
+    {
+        if (LobbyPlayerSetup.Instance != null) return;
+
+        var prefab = Resources.Load<LobbyPlayerSetup>(LobbyPlayerSetupPath);
+        if (prefab == null)
+        {
+            Debug.LogError($"Resources/{LobbyPlayerSetupPath} 프리팹을 찾을 수 없습니다. 프리팹이 Assets/Resources 아래에 있는지 확인하세요.");
+            return;
+        }
+
         UnityEngine.Object.Instantiate(prefab);
     }
 }

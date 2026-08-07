@@ -65,7 +65,7 @@ public class MatchmakingManager : MonoBehaviourPunCallbacks
 
         // 로비에서 바뀐 세팅(이름/무기 등)까지 반영되도록 매칭을 커밋하는 이 시점에 발행한다.
         // Join 오퍼레이션 전에 세팅해두면 상대방에게 룸 입장과 함께 원자적으로 전달된다.
-        PlayerSetupSync.PublishLocal(LocalPlayerSetup.Current);
+        PlayerSetupSync.PublishLocal(PlayData.Current);
 
         if (PhotonNetwork.IsConnectedAndReady)
         {

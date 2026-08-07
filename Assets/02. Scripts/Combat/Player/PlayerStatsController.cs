@@ -11,17 +11,18 @@ using UnityEngine;
 // 반영한다(각 클라이언트가 독립적으로 판정하면 히트가 중복 반영되거나 HP가 어긋날 수 있음).
 public class PlayerStatsController : MonoBehaviourPun, IDamageable
 {
-    public PlayerStatsData baseData;
-
     public PlayerStats Stats { get; private set; }
 
     // 파라미터: (currentHp, maxHp)
     public event Action<float, float> OnHpChanged;
     public event Action OnDeath;
 
-    void Awake()
+    // PlayData(로비 세팅)에서 온 값으로 스탯을 만든다. 스폰 시점에 명시적으로 호출되며
+    // (WeaponController.EquipWeapon과 같은 패턴), 값이 아직 안 들어왔을 때를 대비해
+    // Stats를 참조하는 쪽(PlayerCombatContext.Recalculate 등)은 null 체크를 한다.
+    public void Init(float maxHp, float moveSpeed)
     {
-        Stats = new PlayerStats(baseData);
+        Stats = new PlayerStats(maxHp, moveSpeed);
     }
 
     public void ApplyDamage(float amount)

@@ -44,3 +44,6 @@ TagManager:
   - name: Player
     uniqueID: 1516822965
     locked: 0
+  - name: VisualObstacle
+    uniqueID: 2739441473
+    locked: 0

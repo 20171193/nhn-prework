@@ -41,6 +41,11 @@ MonoBehaviour:
   - RespawnSpaceship
   - RpcApplyDamage
   - RpcFireVolley
+  - RpcThrowSkill
+  - RpcThrow
+  - RpcApplyFacing
+  - RpcClearThrowablePreview
+  - RpcSetThrowablePreview
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 0

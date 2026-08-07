@@ -1,4 +1,4 @@
-// WeaponStatsData를 복사한 런타임 인스턴스.
+// WeaponData를 복사한 런타임 인스턴스.
 [System.Serializable]
 public class WeaponStats
 {
@@ -8,7 +8,7 @@ public class WeaponStats
     public float attackRate;
     public float spreadAngleDegrees;
 
-    public WeaponStats(WeaponStatsData data)
+    public WeaponStats(WeaponData data)
     {
         trajectory = data.trajectory;
         projectileRange = data.projectileRange;

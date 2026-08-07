@@ -1,5 +1,4 @@
-// PlayerStatsData를 복사한 런타임 인스턴스. 증강 등으로 여기 값만 변경하고
-// baseData(ScriptableObject) 원본은 건드리지 않는다.
+// PlayData(로비 세팅)에서 온 기준값의 런타임 인스턴스. 증강 등으로 여기 값만 변경한다.
 [System.Serializable]
 public class PlayerStats
 {
@@ -7,10 +6,10 @@ public class PlayerStats
     public float currentHp;
     public float moveSpeed;
 
-    public PlayerStats(PlayerStatsData data)
+    public PlayerStats(float maxHp, float moveSpeed)
     {
-        maxHp = data.maxHp;
-        currentHp = data.maxHp;
-        moveSpeed = data.moveSpeed;
+        this.maxHp = maxHp;
+        currentHp = maxHp;
+        this.moveSpeed = moveSpeed;
     }
 }

@@ -13,17 +13,21 @@ using UnityEngine;
 [RequireComponent(typeof(LineRenderer))]
 public class WeaponRangeIndicator : MonoBehaviour
 {
-    public PlayerAimController aim;
-    public PlayerCombatContext combatContext;
-
-    [SerializeField] WeaponController weapon;
+    [SerializeField] private WeaponController weapon;
     [SerializeField] private PhotonView ownerPhotonView;
     [SerializeField] private LineRenderer baseLine;  // 0번 발사체 전용, 인스펙터 설정 색 그대로
     [SerializeField] private LineRenderer extraLine; // 1번 이후(증강으로 추가된) 발사체 전용
 
+    PlayerAimController aim;
+    PlayerCombatContext combatContext;
+    ThrowableWeaponController throwableWeapon;
+
     void Awake()
     {
+        aim = GetComponentInParent<PlayerAimController>();
+        combatContext = GetComponentInParent<PlayerCombatContext>();
         ownerPhotonView = GetComponentInParent<PhotonView>();
+        throwableWeapon = GetComponentInParent<ThrowableWeaponController>();
 
         if (ownerPhotonView != null && !ownerPhotonView.IsMine)
         {
@@ -36,6 +40,12 @@ public class WeaponRangeIndicator : MonoBehaviour
     {
         if (ownerPhotonView != null && !ownerPhotonView.IsMine) return;
         if (aim == null || combatContext == null || weapon.muzzle == null) return;
+
+        // 투척 스킬 에임 중에는 총 조준선을 숨긴다(ThrowRangeIndicator가 대신 원을 그려줌).
+        bool isThrowAiming = throwableWeapon != null && throwableWeapon.IsAiming;
+        baseLine.enabled = !isThrowAiming;
+        extraLine.enabled = !isThrowAiming;
+        if (isThrowAiming) return;
 
         Vector3 start = weapon.muzzle.position;
 
