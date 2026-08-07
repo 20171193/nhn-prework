@@ -14,10 +14,12 @@ public class ThrowRangeIndicator : MonoBehaviour
     [Header("범위 원 (플레이어 기준)")]
     [SerializeField] private LineRenderer circleLine;
     [SerializeField] private int segments = 48;
+    [SerializeField, Range(0, 255)] private float circleAlpha255 = 200f;
 
     [Header("궤적 곡선 (muzzle -> 마우스)")]
     [SerializeField] private LineRenderer curveLine;
     [SerializeField] private int curveSegments = 24;
+    [SerializeField, Range(0, 255)] private float curveAlpha255 = 150f;
     // 거리 대비 정점 높이 비율. 거리가 사거리에 가까울수록 maxArcHeightRatio에,
     // 가까우면 minArcHeightRatio에 가까워진다(거리 0이면 min, 사거리 끝이면 max).
     [SerializeField] private float minArcHeightRatio = 0.1f;
@@ -89,13 +91,17 @@ public class ThrowRangeIndicator : MonoBehaviour
         }
     }
 
+    // 머티리얼은 두 라인이 공유하고, 알파는 라인별로 다르게 코드에서 얹는다
+    // (1-1 범위 원은 진하게, 1-2 궤적 곡선은 흐리게) - 굳이 머티리얼을 나눌 필요 없음.
     void SetEnabledLineColor(bool isEnabled)
     {
-        Color color = isEnabled ? Color.green : Color.red;
+        Color baseColor = isEnabled ? Color.green : Color.red;
+        Color circleColor = new Color(baseColor.r, baseColor.g, baseColor.b, circleAlpha255 / 255f);
+        Color curveColor = new Color(baseColor.r, baseColor.g, baseColor.b, curveAlpha255 / 255f);
 
-        circleLine.startColor = color;
-        circleLine.endColor = color;
-        curveLine.startColor = color;
-        curveLine.endColor = color;
+        circleLine.startColor = circleColor;
+        circleLine.endColor = circleColor;
+        curveLine.startColor = curveColor;
+        curveLine.endColor = curveColor;
     }
 }

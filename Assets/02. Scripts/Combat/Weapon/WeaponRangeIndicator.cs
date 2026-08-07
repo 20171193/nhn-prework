@@ -17,6 +17,7 @@ public class WeaponRangeIndicator : MonoBehaviour
     [SerializeField] private PhotonView ownerPhotonView;
     [SerializeField] private LineRenderer baseLine;  // 0번 발사체 전용, 인스펙터 설정 색 그대로
     [SerializeField] private LineRenderer extraLine; // 1번 이후(증강으로 추가된) 발사체 전용
+    [SerializeField, Range(0, 255)] private float lineAlpha255 = 150f; // RGB는 인스펙터 값 유지, 알파만 코드로 덮어씀
 
     PlayerAimController aim;
     PlayerCombatContext combatContext;
@@ -34,6 +35,23 @@ public class WeaponRangeIndicator : MonoBehaviour
             baseLine.enabled = false;
             extraLine.enabled = false;
         }
+
+        ApplyAlpha(baseLine);
+        ApplyAlpha(extraLine);
+    }
+
+    // RGB는 인스펙터에 이미 설정된 값을 그대로 두고 알파만 덮어쓴다.
+    void ApplyAlpha(LineRenderer line)
+    {
+        float alpha = lineAlpha255 / 255f;
+
+        Color start = line.startColor;
+        start.a = alpha;
+        line.startColor = start;
+
+        Color end = line.endColor;
+        end.a = alpha;
+        line.endColor = end;
     }
 
     void Update()
