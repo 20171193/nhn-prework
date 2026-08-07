@@ -29,7 +29,7 @@ public class MatchmakingManager : MonoBehaviourPunCallbacks
     [SerializeField] float matchStartDelay = 2f;
 
     [Tooltip("매칭 성사 시 로드할 전투 씬 이름. Build Settings에 등록되어 있어야 한다.")]
-    [SerializeField] string gameSceneName = "Network_Prototype";
+    [SerializeField] string gameSceneName = "MultiGame";
 
     [Tooltip("빌드가 다르면 서로 매칭되지 않도록 구분하는 버전 문자열.")]
     [SerializeField] string gameVersion = "1";

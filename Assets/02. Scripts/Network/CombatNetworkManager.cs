@@ -268,6 +268,9 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
         LoadLobby();
     }
 
+    // 싱글플레이 씬의 "로비로" 버튼이 직접 호출한다.
+    public void ReturnToLobby() => LoadLobby();
+
     void LoadLobby()
     {
         // 씬이 Build Settings에 없으면 유니티 기본 오류만 나와 원인을 찾기 어렵다. 먼저 짚어준다.

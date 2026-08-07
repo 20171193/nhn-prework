@@ -1279,7 +1279,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   matchStartDelay: 2
-  gameSceneName: Network_Prototype
+  gameSceneName: MultiGame
   gameVersion: 1
 --- !u!4 &1715149609
 Transform:
