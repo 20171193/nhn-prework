@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/01. Scenes/Matchmaking.unity
     guid: 5142cf238ff61cd4b8a7ab9b308b978d
   - enabled: 1
+    path: Assets/01. Scenes/Lobby.unity
+    guid: 7244c293ec4ac834c89f00a27d33c84c
+  - enabled: 1
     path: Assets/01. Scenes/Combat/Network_Prototype.unity
     guid: ea35cc98123a573409e118564b3da6b9
   - enabled: 0

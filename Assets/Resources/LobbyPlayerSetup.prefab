@@ -1071,7 +1071,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d7b0a4104f25334483b6e681d01bf37, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lobbySceneName: Lobby_Test
+  lobbySceneName: Lobby
   canvasRoot: {fileID: 998476803359697592}
   nameInputField: {fileID: 7187446343337143291}
   weaponMainSlot: {fileID: 3555694437556940441}
