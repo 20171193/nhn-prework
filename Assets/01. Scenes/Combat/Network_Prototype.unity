@@ -469,7 +469,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a48d767f895084488fed50eeb51cc2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weaponIconImage: {fileID: 0}
+  weaponIconImage: {fileID: 1794732064}
   fillImage: {fileID: 1090022875}
   cooldownSlider: {fileID: 1794732063}
   slotLockImage: {fileID: 970030932}
@@ -1780,10 +1780,10 @@ MonoBehaviour:
   playerHUD: {fileID: 438794050}
   enemyHUD: {fileID: 1631222393}
   throwableWeaponUIs:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  screenFade: {fileID: 0}
+  - {fileID: 1573458616}
+  - {fileID: 144720800}
+  - {fileID: 808364478}
+  screenFade: {fileID: 611276357}
   statusLabel: {fileID: 882396548}
   spawnPoints:
   - {fileID: 1387496702}
@@ -1802,6 +1802,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 611276356}
+  - {fileID: 989089806}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &525356012
@@ -2787,7 +2788,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a48d767f895084488fed50eeb51cc2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weaponIconImage: {fileID: 0}
+  weaponIconImage: {fileID: 1988983619}
   fillImage: {fileID: 1452743335}
   cooldownSlider: {fileID: 1988983617}
   slotLockImage: {fileID: 711823639}
@@ -3427,7 +3428,7 @@ RectTransform:
   - {fileID: 438794049}
   - {fileID: 1631222392}
   - {fileID: 1912479617}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 519134330}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -6292,7 +6293,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a48d767f895084488fed50eeb51cc2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weaponIconImage: {fileID: 0}
+  weaponIconImage: {fileID: 2131837366}
   fillImage: {fileID: 98674013}
   cooldownSlider: {fileID: 2131837368}
   slotLockImage: {fileID: 1892730775}
@@ -15053,6 +15054,5 @@ SceneRoots:
   - {fileID: 896746443}
   - {fileID: 1495915582}
   - {fileID: 1805404319}
-  - {fileID: 989089806}
   - {fileID: 1409242227}
   - {fileID: 519134330}

@@ -557,7 +557,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerStatsController: {fileID: 3577409558790544149}
   weaponController: {fileID: 0}
-  throwableSkillController: {fileID: 0}
+  throwableWeaponController: {fileID: 0}
   hitCollider: {fileID: 5677659379987054547}
   weaponSocket: {fileID: 243468781038425110}
 --- !u!114 &6685521690813332036
@@ -985,12 +985,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c36d10655a1d138429e2b7aa259f94bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skill: {fileID: 4327329721203309043}
+  throwableWeapon: {fileID: 4327329721203309043}
   circleLine: {fileID: 3080902415804704180}
   segments: 48
   curveLine: {fileID: 7759395361584048837}
   curveSegments: 24
-  arcHeightRatio: 0.4
+  minArcHeightRatio: 0.1
+  maxArcHeightRatio: 0.4
 --- !u!1 &7131547307701998377
 GameObject:
   m_ObjectHideFlags: 0
