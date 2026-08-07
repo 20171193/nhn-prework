@@ -614,7 +614,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerStatsController: {fileID: 3577409558790544149}
   weaponController: {fileID: 0}
-  throwableWeaponController: {fileID: 0}
+  throwableWeaponController: {fileID: 4327329721203309043}
   hitCollider: {fileID: 5677659379987054547}
   weaponSocket: {fileID: 243468781038425110}
 --- !u!114 &6685521690813332036
