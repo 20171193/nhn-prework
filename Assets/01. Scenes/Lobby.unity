@@ -1058,8 +1058,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 742645703}
-        m_TargetAssemblyTypeName: SceneLoadButton, Assembly-CSharp
-        m_MethodName: Load
+        m_TargetAssemblyTypeName: SinglePlayEntryButton, Assembly-CSharp
+        m_MethodName: OnClickEnter
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1116,10 +1116,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 742645698}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d9c047c2fb33a1b4e9e3158f0da69859, type: 3}
+  m_Script: {fileID: 11500000, guid: 6bccb9bd6cca9004a9eef29ba72de60f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   sceneName: SingleGame
+  button: {fileID: 742645700}
 --- !u!1 &766819425
 GameObject:
   m_ObjectHideFlags: 0
