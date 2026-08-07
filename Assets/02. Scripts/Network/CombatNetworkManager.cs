@@ -288,6 +288,10 @@ public class CombatNetworkManager : MonoBehaviourPunCallbacks
             return;
         }
 
+        // 싱글플레이(SinglePlayOfflineSetup)에서 켰던 오프라인 모드가 로비까지 남아있으면
+        // 로비의 실제 매칭(JoinRandomRoom 등)이 전부 오프라인 취급돼 실패한다 - 여기서 반드시 끈다.
+        PhotonNetwork.OfflineMode = false;
+
         SceneManager.LoadScene(lobbySceneName);
     }
 
