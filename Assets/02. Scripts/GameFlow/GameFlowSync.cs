@@ -59,6 +59,8 @@ public class GameFlowSync : IOnEventCallback, IInRoomCallbacks
     public event Action<int> DeathReported;
     // 마스터가 바뀌었다.
     public event Action MasterClientSwitched;
+    // 누군가 방을 나갔다(마스터 본인 제외 - 마스터가 나간 경우는 MasterClientSwitched로 따로 옴).
+    public event Action PlayerLeftRoom;
 
     public void Enable()
     {
@@ -159,7 +161,7 @@ public class GameFlowSync : IOnEventCallback, IInRoomCallbacks
 
     // IInRoomCallbacks의 나머지는 흐름과 상관없다. 마스터 교체 하나 때문에 같이 구현한다.
     public void OnPlayerEnteredRoom(Player newPlayer) { }
-    public void OnPlayerLeftRoom(Player otherPlayer) { }
+    public void OnPlayerLeftRoom(Player otherPlayer) => PlayerLeftRoom?.Invoke();
     public void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged) { }
     public void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps) { }
 }

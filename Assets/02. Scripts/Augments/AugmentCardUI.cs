@@ -95,11 +95,13 @@ public class AugmentCardUI : MonoBehaviour, IPointerDownHandler, IPointerEnterHa
     private void HandleRerollClicked()
     {
         if (!rerollAvailable) return;
+        SoundManager.Instance?.PlaySfxUI(SfxId.ClickNormalBTN);
         OnReroll?.Invoke(this);
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        SoundManager.Instance?.PlaySfxUI(SfxId.ClickAugmentSelectBTN);
         OnClick?.Invoke(this);
     }
 

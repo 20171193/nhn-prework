@@ -138,6 +138,7 @@ public class GameManager : Singleton<GameManager>
         sync.EndMatchRequested += OnEndMatchRequested;
         sync.DeathReported += OnDeathReported;
         sync.MasterClientSwitched += OnMasterClientSwitched;
+        sync.PlayerLeftRoom += OnPlayerLeftRoom;
         sync.Enable();
     }
 
@@ -148,6 +149,7 @@ public class GameManager : Singleton<GameManager>
         sync.EndMatchRequested -= OnEndMatchRequested;
         sync.DeathReported -= OnDeathReported;
         sync.MasterClientSwitched -= OnMasterClientSwitched;
+        sync.PlayerLeftRoom -= OnPlayerLeftRoom;
         sync.Disable();
 
         SubscribeDeath(null);
@@ -286,6 +288,8 @@ public class GameManager : Singleton<GameManager>
             Debug.LogWarning("로컬 플레이어가 이미 등록되어 있습니다. 새로 등록된 쪽으로 교체합니다.", this);
 
         localPlayer = context;
+        Debug.Log($"[증강로그] RegisterLocalPlayer 완료 - Phase={Phase}, Time={Time.time:F2} " +
+                  "(1라운드 증강 시작보다 이 시점이 늦으면 등록 레이스 확정)");
 
         // 사망은 흐름을 끝내는 사건이라 흐름 쪽에서 직접 듣는다.
         // PlayerStatsController를 따로 등록받지 않고 여기서 꺼내 쓰는 이유는, 플레이어의
@@ -382,6 +386,9 @@ public class GameManager : Singleton<GameManager>
         selectionDone.Clear();
         AugmentSelectionsOffered = selectionIndex;
 
+        Debug.Log($"[증강로그][마스터] AugmentSelectPhase 시작 - selectionIndex={selectionIndex}, " +
+                  $"PlayerCount={sync.PlayerCount}, Time={Time.time:F2}");
+
         // 마감 시각을 먼저 못박고 방송한다. 화면을 여는 것은 그다음이다.
         // 상대는 이 시각에서 여유 시간을 뺀 만큼만 화면을 열어, 양쪽 로프 타이머가 같이 탄다.
         BeginPhase(GamePhase.AugmentSelect, sync.Now + augmentSelectDuration + SelectionGrace, matchTimeLeftAfter);
@@ -389,6 +396,9 @@ public class GameManager : Singleton<GameManager>
 
         // 둘 다 고르면 남은 시간이 있어도 넘어간다. 아무도 응답하지 않으면 마감 시각에 끊긴다.
         yield return WaitForPhaseEnd(() => selectionDone.Count >= sync.PlayerCount);
+
+        Debug.Log($"[증강로그][마스터] AugmentSelectPhase 종료 - selectionDone={selectionDone.Count}/{sync.PlayerCount}, " +
+                  $"PhaseTimeLeft={PhaseTimeLeft:F2}, isMatchEnding={isMatchEnding}, Time={Time.time:F2}");
 
         if (isPlayerChoosingAugment)
             Debug.LogWarning("증강 선택 화면이 제한 시간 안에 응답하지 않아 그냥 넘어갑니다.", this);
@@ -530,13 +540,39 @@ public class GameManager : Singleton<GameManager>
         MatchEnded?.Invoke();
     }
 
+    // OnMasterClientSwitched와 대칭되는 경우 - 나는 마스터인 채로 상대(비마스터)가 나갔다.
+    // 1:1이라 상대가 나갔다는 것은 내가 남았다는 뜻이니, 사망 판정과 같은 경로(FinishMatch)로
+    // 넘겨서 이미 진행 중인 MatchRoutine이 정상적으로 MatchOver까지 이어지게 한다
+    // (결과 화면 등 나머지 처리는 손대지 않고 그대로 재사용).
+    private void OnPlayerLeftRoom()
+    {
+        if (!sync.IsAuthority) return; // 마스터가 나간 경우는 OnMasterClientSwitched가 처리
+        if (!CanEndMatch()) return;
+
+        Debug.LogWarning("상대가 방을 떠나 매치를 종료합니다.", this);
+        FinishMatch(sync.LocalActorNumber);
+    }
+
     // ── 마스터가 받는 요청 ────────────────────────────────────────────
 
     private void OnSelectionDoneReceived(int actorNumber, int selectionIndex)
     {
+        Debug.Log($"[증강로그][마스터] OnSelectionDoneReceived 도착 - actorNumber={actorNumber}, " +
+                  $"selectionIndex={selectionIndex}, AugmentSelectionsOffered={AugmentSelectionsOffered}, " +
+                  $"Phase={Phase}, Time={Time.time:F2}");
+
         // 지난 회차에서 늦게 도착한 보고가 이번 선택을 앞당겨 끊지 않도록 막는다.
-        if (!sync.IsAuthority || Phase != GamePhase.AugmentSelect) return;
-        if (selectionIndex != AugmentSelectionsOffered) return;
+        if (!sync.IsAuthority || Phase != GamePhase.AugmentSelect)
+        {
+            Debug.LogWarning($"[증강로그][마스터] OnSelectionDoneReceived 무시됨 - IsAuthority={sync.IsAuthority}, Phase={Phase}", this);
+            return;
+        }
+        if (selectionIndex != AugmentSelectionsOffered)
+        {
+            Debug.LogWarning($"[증강로그][마스터] OnSelectionDoneReceived 무시됨 - selectionIndex 불일치 " +
+                              $"(받음={selectionIndex}, 현재={AugmentSelectionsOffered})", this);
+            return;
+        }
 
         selectionDone.Add(actorNumber);
     }
@@ -586,18 +622,31 @@ public class GameManager : Singleton<GameManager>
     {
         isPlayerChoosingAugment = false;
 
+        Debug.Log($"[증강로그] OnAugmentChosen 호출 - data={(data != null ? data.name : "null")}, " +
+                  $"localPlayer={(localPlayer != null ? "있음" : "null")}, Time={Time.time:F2}");
+
         // 마스터는 이 보고가 다 모여야 전투로 돌아간다. 고른 것이 없어도 보고는 해야 한다.
         ReportSelectionDone();
 
         // 제한 시간 안에 고를 것이 하나도 없었으면 null이 온다.
-        if (data == null) return;
+        if (data == null)
+        {
+            Debug.LogWarning("[증강로그] OnAugmentChosen: data가 null이라 적용 건너뜀.", this);
+            return;
+        }
 
         // 흐름만 확인하는 씬에는 증강을 받을 플레이어가 없다. 획득 기록만 남기고 넘어간다.
-        if (localPlayer == null) return;
+        if (localPlayer == null)
+        {
+            Debug.LogWarning($"[증강로그] OnAugmentChosen: localPlayer가 null이라 {data.name} 적용 건너뜀! " +
+                              "(등록 타이밍 레이스 의심)", this);
+            return;
+        }
 
         // data.Apply()를 직접 부르지 않는다. 그러면 효과만 붙고 획득 알림이 나가지 않아
         // HUD의 증강 아이콘이 끝까지 비어 있는다. 확정 창구는 ApplyAugment 하나다.
         localPlayer.ApplyAugment(data);
+        Debug.Log($"[증강로그] {data.name} 적용 완료.", this);
     }
 
     private void ReportSelectionDone()
@@ -605,9 +654,11 @@ public class GameManager : Singleton<GameManager>
         if (sync.IsAuthority)
         {
             selectionDone.Add(sync.LocalActorNumber);
+            Debug.Log($"[증강로그][마스터] ReportSelectionDone(로컬/마스터) - selectionDone={selectionDone.Count}, Time={Time.time:F2}");
             return;
         }
 
+        Debug.Log($"[증강로그][팔로워] ReportSelectionDone 전송 - selectionIndex={AugmentSelectionsOffered}, Time={Time.time:F2}");
         sync.ReportSelectionDone(AugmentSelectionsOffered);
     }
 }

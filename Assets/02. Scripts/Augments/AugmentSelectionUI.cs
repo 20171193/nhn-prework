@@ -84,6 +84,10 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
         }
 
         countdown = StartCoroutine(Countdown(duration));
+        SoundManager.Instance?.PlayLoopingSfx(SfxId.AugmentSelectTimer);
+
+        Debug.Log($"[증강로그] Show 호출 - duration={duration:F2}, offers={offers.Count}, " +
+                  $"Time={Time.time:F2}, PhotonTime={(Photon.Pun.PhotonNetwork.InRoom ? Photon.Pun.PhotonNetwork.Time : -1):F2}");
     }
 
     // 증강 선택 구간이 끝났다. 아직 고르지 않았다면 고른 것 없이 화면만 걷어내고,
@@ -132,6 +136,9 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
     {
         var offers = manager.Offers;
         var chosen = index >= 0 && index < offers.Count ? offers[index] : null;
+
+        Debug.Log($"[증강로그] Choose 호출 - index={index}, chosen={(chosen != null ? chosen.name : "null")}, " +
+                  $"onChosen콜백있음={onChosen != null}, Time={Time.time:F2}");
 
         // 콜백은 한 번만 나가야 한다. 넘기기 전에 먼저 비운다.
         var callback = onChosen;
@@ -216,8 +223,12 @@ public class AugmentSelectionUI : MonoBehaviour, IAugmentSelectionView
     // 다음 라운드에는 클릭 한 번이 여러 번으로 들어온다.
     private void Close()
     {
+        Debug.Log($"[증강로그] Close 호출 - 아직카운트다운중이었음={countdown != null} " +
+                  $"(true면 Choose가 아니라 GameManager.Hide()로 외부에서 강제로 닫힌 것), Time={Time.time:F2}");
+
         if (countdown != null) StopCoroutine(countdown);
         countdown = null;
+        SoundManager.Instance?.StopLoopingSfx();
 
         // 로프를 다 탄 상태로 만들어 불꽃 오브젝트까지 꺼둔다(RopeTimerUI.PlaceFlame이 SetActive로 끈다).
         // panel.enabled만 끄면 캔버스 그래픽만 사라지고, 캔버스 소속이 아닌 불꽃 파티클은

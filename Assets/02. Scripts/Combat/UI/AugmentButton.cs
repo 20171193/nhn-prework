@@ -98,6 +98,7 @@ public class AugmentButton : MonoBehaviour
     {
         if (!HasAugment) return; // 아직 못 얻은 슬롯은 보여줄 것이 없다
 
+        SoundManager.Instance?.PlaySfxUI(SfxId.ClickNormalBTN);
         SetTooltipOpen(!tooltipOpen);
     }
 
@@ -106,6 +107,7 @@ public class AugmentButton : MonoBehaviour
     {
         if (!tooltipOpen) return;
 
+        SoundManager.Instance?.PlaySfxUI(SfxId.ClickNormalBTN);
         SetTooltipOpen(false);
     }
 
