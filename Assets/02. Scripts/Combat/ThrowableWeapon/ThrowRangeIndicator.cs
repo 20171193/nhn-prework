@@ -3,37 +3,45 @@ using UnityEngine;
 using UnityEngine.Serialization;
 
 // 투척무기 에임 중에 두 가지를 같이 보여준다.
-// 1. 플레이어 위치 기준 원 - 마우스 좌표와 무관한 전체 사거리(기존 로직 그대로)
+// 1. 캐릭터(root) 위치 기준 원 - 마우스 좌표와 무관한 전체 사거리
 // 2. muzzle -> 마우스 방향 포물선 - 지금 조준하면 실제로 어디로 날아갈지 궤적 미리보기
+// 둘 다 사거리 안/밖 여부(throwableWeapon.OnRange)에 따라 같이 초록/빨강으로 바뀐다.
 // WeaponRangeIndicator와 같은 원칙으로, 원격 플레이어(IsMine이 아님)는 그리지 않는다.
 public class ThrowRangeIndicator : MonoBehaviour
 {
     [FormerlySerializedAs("skill")]
     public ThrowableWeaponController throwableWeapon;
 
-    [Header("범위 원 (플레이어 기준)")]
+    [Header("범위 원 (root 기준)")]
     [SerializeField] private LineRenderer circleLine;
     [SerializeField] private int segments = 48;
-    [SerializeField, Range(0, 255)] private float circleAlpha255 = 200f;
 
     [Header("궤적 곡선 (muzzle -> 마우스)")]
     [SerializeField] private LineRenderer curveLine;
     [SerializeField] private int curveSegments = 24;
-    [SerializeField, Range(0, 255)] private float curveAlpha255 = 150f;
     // 거리 대비 정점 높이 비율. 거리가 사거리에 가까울수록 maxArcHeightRatio에,
     // 가까우면 minArcHeightRatio에 가까워진다(거리 0이면 min, 사거리 끝이면 max).
     [SerializeField] private float minArcHeightRatio = 0.1f;
     [SerializeField] private float maxArcHeightRatio = 0.4f;
 
     PlayerAimController aim;
-    PlayerCombatContext combatContext;
     PhotonView ownerPhotonView;
+    // 인스펙터에서 미리 설정해둔 그라디언트의 알파값 - 코드는 절대 알파를 덮어쓰지 않고
+    // 이 캐싱값만 재사용해서 RGB만 바꾼다.
+    float cachedCircleStartAlpha;
+    float cachedCircleEndAlpha;
+    float cachedCurveStartAlpha;
+    float cachedCurveEndAlpha;
 
     void Awake()
     {
         ownerPhotonView = GetComponentInParent<PhotonView>();
         aim = GetComponentInParent<PlayerAimController>();
-        combatContext = GetComponentInParent<PlayerCombatContext>();
+
+        cachedCircleStartAlpha = circleLine.startColor.a;
+        cachedCircleEndAlpha = circleLine.endColor.a;
+        cachedCurveStartAlpha = curveLine.startColor.a;
+        cachedCurveEndAlpha = curveLine.endColor.a;
 
         if (ownerPhotonView != null && !ownerPhotonView.IsMine)
         {
@@ -54,8 +62,8 @@ public class ThrowRangeIndicator : MonoBehaviour
 
         DrawCircle(throwableWeapon.ThrowRange);
 
-        if (aim != null && combatContext != null && combatContext.weaponController != null && combatContext.weaponController.muzzle != null)
-            DrawCurve(combatContext.weaponController.muzzle.position, throwableWeapon.ThrowRange);
+        if (aim != null && throwableWeapon.muzzle != null)
+            DrawCurve(throwableWeapon.muzzle.position, throwableWeapon.ThrowRange);
 
         SetEnabledLineColor(throwableWeapon.OnRange);
     }
@@ -91,17 +99,14 @@ public class ThrowRangeIndicator : MonoBehaviour
         }
     }
 
-    // 머티리얼은 두 라인이 공유하고, 알파는 라인별로 다르게 코드에서 얹는다
-    // (1-1 범위 원은 진하게, 1-2 궤적 곡선은 흐리게) - 굳이 머티리얼을 나눌 필요 없음.
+    // 알파는 건드리지 않고 RGB만 바꾼다 - Awake에서 캐싱해둔 알파값을 그대로 재사용.
     void SetEnabledLineColor(bool isEnabled)
     {
         Color baseColor = isEnabled ? Color.green : Color.red;
-        Color circleColor = new Color(baseColor.r, baseColor.g, baseColor.b, circleAlpha255 / 255f);
-        Color curveColor = new Color(baseColor.r, baseColor.g, baseColor.b, curveAlpha255 / 255f);
 
-        circleLine.startColor = circleColor;
-        circleLine.endColor = circleColor;
-        curveLine.startColor = curveColor;
-        curveLine.endColor = curveColor;
+        circleLine.startColor = new Color(baseColor.r, baseColor.g, baseColor.b, cachedCircleStartAlpha);
+        circleLine.endColor = new Color(baseColor.r, baseColor.g, baseColor.b, cachedCircleEndAlpha);
+        curveLine.startColor = new Color(baseColor.r, baseColor.g, baseColor.b, cachedCurveStartAlpha);
+        curveLine.endColor = new Color(baseColor.r, baseColor.g, baseColor.b, cachedCurveEndAlpha);
     }
 }

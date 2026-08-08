@@ -15,6 +15,9 @@ public class PlayerWeaponFireController : MonoBehaviour
     float fireTimer;
     float cooldownDuration; // 방금 발사 시점 기준 재발사까지 걸리는 시간 - fireTimer와 함께 fill 계산에 쓴다.
 
+    // 쿨다운(딜레이) 중이 아니라 지금 바로 쏠 수 있는지. WeaponRangeIndicator가 라인 표시 여부를 정할 때 쓴다.
+    public bool CanFire => fireTimer <= 0f;
+
     void Awake()
     {
         weapon = GetComponent<WeaponController>();

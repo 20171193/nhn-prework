@@ -12,6 +12,7 @@ using UnityEngine;
 public class ThrowableWeaponController : MonoBehaviourPun
 {
     public PlayerAimController aim;
+    public Transform muzzle; // 투척 시작점 - weaponController.muzzle(총구)과 별도로 관리한다.
 
     static readonly KeyCode[] SlotKeys = { KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3 };
     public const int SlotCount = 3;
@@ -165,7 +166,7 @@ public class ThrowableWeaponController : MonoBehaviourPun
         if (!OnRange) return;
 
         var data = slots[activeSlotIndex].weaponData;
-        Vector3 start = combatContext.weaponController.muzzle.position;
+        Vector3 start = muzzle.position;
         combatContext.Throw(start, ClampedTarget(start), data.id);
 
         combatContext.ClearThrowablePreview();
