@@ -17,7 +17,7 @@ MonoBehaviour:
   projectileRange: 10
   projectileCount: 1
   attackRate: 1
-  spreadAngleDegrees: 3
+  spreadAngleDegrees: 5
   projectileData: {fileID: 11400000, guid: e97efd295aa106341beb40245e600f3b, type: 2}
   prefab: {fileID: 8077907479858348566, guid: 372fdf6b85206844b8e79cb7100117b4, type: 3}
   icon: {fileID: 21300000, guid: 954d95963b5acbe45950b05229ccd1eb, type: 3}
