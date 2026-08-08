@@ -128,7 +128,9 @@ public class ThrowableWeaponController : MonoBehaviourPun
     }
 
     public ThrowableWeaponData GetWeaponData(int slotIndex) => slots[slotIndex].weaponData;
-    public float GetCooldownRate(int slotIndex) => slots[slotIndex].cooldownRemaining / SlotCooldown(slotIndex);
+    // 쿨타임이 도는 중에 감소 증강을 먹으면 남은 시간이 새 최대치보다 커질 수 있다 -
+    // UI 슬라이더가 1을 넘겨 튀지 않도록 잘라준다.
+    public float GetCooldownRate(int slotIndex) => Mathf.Clamp01(slots[slotIndex].cooldownRemaining / SlotCooldown(slotIndex));
 
     // 슬롯을 잠금해제하고 투척무기를 장착한다. 룸 입장 시 기본 투척무기(슬롯0)와, 증강으로
     // 추가 투척무기를 얻었을 때(슬롯1/2) 양쪽 다 이 메서드 하나로 처리한다.
@@ -166,7 +168,7 @@ public class ThrowableWeaponController : MonoBehaviourPun
 
         var data = slots[activeSlotIndex].weaponData;
         Vector3 start = combatContext.weaponController.muzzle.position;
-        combatContext.Throw(start, ClampedTarget(start), data.id);
+        combatContext.Throw(start, ClampedTarget(start), data.id, ThrowRange);
 
         combatContext.ClearThrowablePreview();
         slots[activeSlotIndex].cooldownRemaining = SlotCooldown(activeSlotIndex);
@@ -192,6 +194,17 @@ public class ThrowableWeaponController : MonoBehaviourPun
             : aim.MouseWorldPosition;
     }
 
-    float SlotCooldown(int slotIndex) => slots[slotIndex].weaponData != null ? slots[slotIndex].weaponData.cooldown : cooldown;
-    float SlotRange(int slotIndex) => slots[slotIndex].weaponData != null ? slots[slotIndex].weaponData.range : throwRange;
+    // 투척무기 데이터의 기준값에 증강 보정(ThrowableCooldown/ThrowableRange)을 얹은 실제 수치.
+    // 슬롯마다 기준값이 다르므로 PlayerCombatContext에 캐싱된 값을 읽는 게 아니라 기준값을 넘겨서 계산한다.
+    float SlotCooldown(int slotIndex)
+    {
+        float baseCooldown = slots[slotIndex].weaponData != null ? slots[slotIndex].weaponData.cooldown : cooldown;
+        return combatContext.ThrowableCooldownOf(baseCooldown);
+    }
+
+    float SlotRange(int slotIndex)
+    {
+        float baseRange = slots[slotIndex].weaponData != null ? slots[slotIndex].weaponData.range : throwRange;
+        return combatContext.ThrowableRangeOf(baseRange);
+    }
 }

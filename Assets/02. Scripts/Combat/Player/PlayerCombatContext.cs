@@ -36,6 +36,9 @@ public class PlayerCombatContext : MonoBehaviourPun
     public float EffectiveProjectileDamage { get; private set; }
     public int EffectiveProjectileCount { get; private set; }
 
+    // 쿨타임 감소 증강이 여러 번 쌓여도 사실상 무제한 투척이 되지 않도록 두는 하한(초).
+    const float MinThrowableCooldown = 1f;
+
     // 증강 선택에서 고른 증강을 받을 대상으로 자신을 등록한다.
     // GameManager -> 플레이어 방향의 참조를 두지 않는 이유는 IAugmentSelectionView 주석과 같다.
     // (플레이어는 씬과 함께 사라지지만 GameManager는 씬을 넘어 살아남는다.)
@@ -125,13 +128,17 @@ public class PlayerCombatContext : MonoBehaviourPun
     }
 
     // FireVolley와 같은 패턴 - 투척도 RPC로 전파하고, 각 클라이언트가 로컬로 독립 재생한다.
-    public void Throw(Vector3 start, Vector3 end, int throwableWeaponId)
+    //
+    // throwRange는 던진 사람의 실제 사거리(사거리 증강 반영). 궤적 높이가 거리/사거리 비율로
+    // 정해지므로(ThrowArcMath) 원격 클라이언트가 ThrowableWeaponData.range를 그냥 읽으면
+    // 증강을 가진 쪽과 다른 높이로 날아가고, 도중 장애물 판정까지 갈릴 수 있다 - 그래서 같이 보낸다.
+    public void Throw(Vector3 start, Vector3 end, int throwableWeaponId, float throwRange)
     {
-        photonView.RPC(nameof(RpcThrow), RpcTarget.All, start, end, throwableWeaponId);
+        photonView.RPC(nameof(RpcThrow), RpcTarget.All, start, end, throwableWeaponId, throwRange);
     }
 
     [PunRPC]
-    void RpcThrow(Vector3 start, Vector3 end, int throwableWeaponId)
+    void RpcThrow(Vector3 start, Vector3 end, int throwableWeaponId, float throwRange)
     {
         if (!ThrowableWeaponDatabase.Instance.TryGet(throwableWeaponId, out var data) || data.prefab == null)
         {
@@ -140,7 +147,7 @@ public class PlayerCombatContext : MonoBehaviourPun
         }
 
         var obj = ProjectilePool.Get(data.prefab, start, Quaternion.identity);
-        obj.GetComponent<ThrowableObject>().Init(start, end, data);
+        obj.GetComponent<ThrowableObject>().Init(start, end, data, throwRange);
 
         // 수류탄/섬광탄/연막탄 3종 모두 동일한 투척음을 쓴다.
         SoundManager.Instance?.PlaySfx(SfxId.ThrowWeapon, start);
@@ -245,6 +252,14 @@ public class PlayerCombatContext : MonoBehaviourPun
         EffectiveProjectileDamage = Calculate(projectileStats.damage, StatType.ProjectileDamage);
         EffectiveProjectileCount = Mathf.Max(1, Mathf.RoundToInt(Calculate(weaponStats.projectileCount, StatType.ProjectileCount)));
     }
+    // 투척무기 사거리/쿨타임은 슬롯마다 기준값이 다르므로(수류탄/섬광탄/연막탄이 각자
+    // ThrowableWeaponData에 자기 값을 들고 있다) Effective*처럼 하나로 캐싱해둘 수 없다.
+    // 보정 계산만 열어주고 기준값은 부르는 쪽(ThrowableWeaponController)이 넘긴다.
+    public float ThrowableRangeOf(float baseRange) => Calculate(baseRange, StatType.ThrowableRange);
+
+    public float ThrowableCooldownOf(float baseCooldown) =>
+        Mathf.Max(MinThrowableCooldown, Calculate(baseCooldown, StatType.ThrowableCooldown));
+
     float Calculate(float baseValue, StatType statType)
     {
         float sumOfAdds = 0f;

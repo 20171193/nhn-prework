@@ -10,16 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f94cbb9e4b30ffb449c9bf2732018bf5, type: 3}
-  m_Name: DoubleShot
+  m_Name: QuickHands
   m_EditorClassIdentifier: 
-  id: 40001
-  augmentName: "\uC774\uC911 \uC0AC\uACA9"
-  description: "\uBC1C\uC0AC\uCCB4 +1\uBC1C. \uBD80\uCC44\uAF34\uB85C \uD37C\uC838
-    \uB098\uAC04\uB2E4."
+  id: 40008
+  augmentName: "\uC219\uB828\uB41C \uC190\uB180\uB9BC"
+  description: "\uD22C\uCC99\uB958 \uBB34\uAE30 \uCFE8\uD0C0\uC784 x0.7"
   tier: 0
-  bigIcon: {fileID: 21300000, guid: 4df3c1e19cb467e4b8e7a72931b00b04, type: 3}
-  smallIcon: {fileID: 21300000, guid: 3f93eba4116e4354d9257fa7cab62246, type: 3}
+  bigIcon: {fileID: 21300000, guid: 45f69c28d86cfd54ab8fcd3282d8223b, type: 3}
+  smallIcon: {fileID: 21300000, guid: 531d78a40a59cbe4883c59e0d5f3c404, type: 3}
   modifiers:
-  - statType: 4
-    operation: 0
-    value: 1
+  - statType: 6
+    operation: 1
+    value: 0.7
