@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f94cbb9e4b30ffb449c9bf2732018bf5, type: 3}
   m_Name: SwiftFeet
   m_EditorClassIdentifier: 
-  id: 0
+  id: 40002
   augmentName: "\uC2E0\uC18D\uD55C \uBC1C\uB180\uB9BC"
   description: "\uC774\uB3D9 \uC18D\uB3C4 +1"
   tier: 0
-  bigIcon: {fileID: 21300000, guid: a9b3e55d692386645a50312b9ae2516a, type: 3}
-  smallIcon: {fileID: 21300000, guid: 82838c1744edf354b8ad74dff0d3a0f9, type: 3}
+  bigIcon: {fileID: 21300000, guid: 5f6c3678bad167e408a6af96ab706ac5, type: 3}
+  smallIcon: {fileID: 21300000, guid: 6c23807f22099b242ae2cd49ed1cdac5, type: 3}
   modifiers:
   - statType: 0
     operation: 0

@@ -12,9 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ebc5d1d7f0d13347bcd01aa7f845c50, type: 3}
   m_Name: FlashAugment
   m_EditorClassIdentifier: 
-  id: 40102
+  id: 40004
   augmentName: "\uC12C\uAD11 \uBCF4\uAE09"
   description: "\uC12C\uAD11\uD0C4\uC744 \uBE48 \uD22C\uCC99 \uC2AC\uB86F\uC5D0 \uD574\uAE08\uD55C\uB2E4.
     \uC801\uC758 \uD654\uBA74\uC744 \uD558\uC597\uAC8C \uD0DC\uC6B4\uB2E4."
-  tier: 1
+  tier: 0
+  bigIcon: {fileID: 21300000, guid: 398519ae4653f8c4e9c22a0bcacd0391, type: 3}
+  smallIcon: {fileID: 21300000, guid: 0cfcdd91256494147be0e73c9db1ec2f, type: 3}
   throwable: {fileID: 11400000, guid: 6a31abf974a4c044683ff9380a8464d8, type: 2}

@@ -63,14 +63,17 @@ public abstract class ThrowableObject : MonoBehaviour
         effectRangeLine.enabled = false;
     }
 
-    public void Init(Vector3 start, Vector3 end, ThrowableWeaponData data)
+    // throwRange는 data.range가 아니라 던진 사람의 실제 사거리(증강 반영)를 RPC로 받아서 쓴다 -
+    // 궤적 높이가 거리/사거리 비율로 정해지므로, 여기서 data.range를 읽으면 사거리 증강을 가진
+    // 쪽의 미리보기 곡선(ThrowRangeIndicator)과 실제 궤적이 어긋난다.
+    public void Init(Vector3 start, Vector3 end, ThrowableWeaponData data, float throwRange)
     {
         this.start = start;
         this.end = end;
+        this.throwRange = throwRange;
         effectValue = data.effectValue;
         effectRadius = data.effectRadius;
         triggerDelay = data.triggerDelay;
-        throwRange = data.range;
 
         travelDuration = Mathf.Max(0.01f, Vector3.Distance(start, end) / travelSpeed);
         elapsed = 0f;

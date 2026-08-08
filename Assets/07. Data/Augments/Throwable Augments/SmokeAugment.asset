@@ -12,9 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ebc5d1d7f0d13347bcd01aa7f845c50, type: 3}
   m_Name: SmokeAugment
   m_EditorClassIdentifier: 
-  id: 40101
+  id: 40006
   augmentName: "\uC5F0\uB9C9 \uBCF4\uAE09"
   description: "\uC5F0\uB9C9\uD0C4\uC744 \uBE48 \uD22C\uCC99 \uC2AC\uB86F\uC5D0 \uD574\uAE08\uD55C\uB2E4.
     \uC2DC\uC57C\uB97C \uAC00\uB824 \uAD50\uC804\uC744 \uB04A\uB294\uB2E4."
   tier: 0
+  bigIcon: {fileID: 21300000, guid: a607152cc093ded4194f6f691bb9277e, type: 3}
+  smallIcon: {fileID: 21300000, guid: 7d708d5c7ddfae942abbcbf56f01b1d8, type: 3}
   throwable: {fileID: 11400000, guid: e4edc1978ecee7549b8a7d795a93d289, type: 2}
