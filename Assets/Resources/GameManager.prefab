@@ -46,6 +46,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   augmentCatalog: {fileID: 11400000, guid: e6249fd9a42ba6942bb8571ec28898ea, type: 2}
+  matchDuration: 210
+  augmentSelectCount: 3
+  augmentSelectInterval: 60
+  readyDuration: 3
+  augmentSelectDuration: 15
 --- !u!1001 &6579563896491892522
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -54,6 +59,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 172739130414554403}
     m_Modifications:
+    - target: {fileID: 498560628516367334, guid: fbe40cd7eace01447b719ae966441e16, type: 3}
+      propertyPath: m_ReferenceResolution.x
+      value: 1280
+      objectReference: {fileID: 0}
+    - target: {fileID: 498560628516367334, guid: fbe40cd7eace01447b719ae966441e16, type: 3}
+      propertyPath: m_ReferenceResolution.y
+      value: 720
+      objectReference: {fileID: 0}
+    - target: {fileID: 880304793952144069, guid: fbe40cd7eace01447b719ae966441e16, type: 3}
+      propertyPath: m_SortingOrder
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 2601591203396367968, guid: fbe40cd7eace01447b719ae966441e16, type: 3}
+      propertyPath: m_SortingOrder
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 7777479206412330257, guid: fbe40cd7eace01447b719ae966441e16, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

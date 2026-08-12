@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SFX_Throw
   m_EditorClassIdentifier: 
   id: 60009
-  clip: {fileID: 8300000, guid: c1e6182dee8dcf648ac5d19173f260cf, type: 3}
+  clip: {fileID: 8300000, guid: a0f309360d78e0d49a7f828a670670ea, type: 3}
   volume: 1
   minDistance: 3
   maxDistance: 20
