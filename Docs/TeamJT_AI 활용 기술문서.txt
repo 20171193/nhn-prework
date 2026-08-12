@@ -1,0 +1,75 @@
+# AI 활용 기술 문서 — 데스페라도 아레나
+
+## 1. 사용한 AI 도구 개요
+| 도구 | 용도 |
+|---|---|
+| Claude Code (Claude Sonnet 5) | 게임 코드 구현/리팩터, 버그 수정, Git/GitHub 연동, WebGL 빌드 배포, 이미지 절차적 생성(Python) |
+| Google Gemini (Nano Banana) | 전체적인 게임 시안 및 디자인리소스 |
+| Suno | BGM생성(타이틀, 인게임) |
+| ElevenLabs (Sound Effects) | 효과음(SFX) 생성 |
+
+## 2. 개발 
+
+— AI Tool :  Claude Code
+
+개발 전 과정에서 Claude Code를 페어 프로그래밍 파트너로 활용했다. 단순 코드 생성기가 아니라, 설계 논의 → 구현 → 디버깅 → 협업 조율까지 개발 흐름 전체에 걸쳐 사용한 사례를 아래와 같이 정리한다.
+
+**복잡한 수식/연산 구현을 자연어로 전달해 빠르게 처리**
+투척무기 궤적(포물선), 발사체 부채꼴 스프레드, 사거리 표시 원 등 수식으로 표현해야 하는 연출을 코드가 아니라 **"의도"** 단위로 전달하고 구현을 맡겼다.
+- 예: "거리 대비 정점 높이 비율을 거리가 사거리에 가까울수록 크게, 가까우면 완만하게" → `ThrowArcMath.Evaluate()` (선형보간 + 포물선 높이 오프셋) 구현
+- 예: 발사체 여러 개가 부채꼴로 퍼지는 각도 계산(`FanSpread`), 원격 클라이언트와 동일한 궤적이 나오도록 사거리 증강 값을 RPC로 함께 전달하는 동기화 로직까지 한 번에 설계·구현
+- 사람이 직접 삼각함수/보간 공식을 짜고 검증하는 시간을 줄이고, 대신 "결과가 어떤 느낌이어야 하는지"를 검토하는 데 시간을 씀
+
+**데이터 구조 설계 조언 — 짧은 기간에도 확장성 확보**
+Weapon/Projectile/ThrowableWeapon/Augment 등 종류가 계속 늘어날 데이터를 어떻게 관리할지 설계 단계부터 논의했다.
+- `Database<T>` 제네릭 베이스 클래스 + ID 기반 조회 구조 채택 — 카테고리별로 ID 구간(Projectile 10000~/Weapon 20000~/ThrowableWeapon 30000~/Augment 40000~)을 나눠, 이후 사운드 시스템(Bgm 50000~/Sfx 60000~/Amb 70000~)을 추가할 때도 기존 규칙을 그대로 이어받아 별도 설계 없이 확장
+- Bootstrap 패턴(`RuntimeInitializeOnLoadMethod`)으로 모든 DB를 부팅 시점에 한 번만 로딩하는 구조를 제안받아 채택 — 씬이 바뀌어도 재로딩 비용 없음
+- 짧은 개발 기간 안에서 "당장 필요한 만큼만" 구현하면서도, 이후 기능이 늘어날 자리를 미리 확보하는 균형을 매 설계 논의마다 함께 조율
+
+**프로토타입 우선 구현 후 점진적으로 살 붙이는 방식**
+새 기능을 붙일 때 처음부터 완성형을 짜지 않고, 기존 구조를 최대한 재사용하는 최소 구현으로 먼저 동작시킨 뒤 다듬는 순서로 진행했다.
+- 싱글플레이 모드: 새 네트워크 로직을 짜는 대신 Photon PUN2의 `OfflineMode`를 켜서 기존 멀티플레이 코드(이동/조준/발사/RPC)를 그대로 재사용하는 방식으로 먼저 동작시킨 뒤, 이후 발견된 예외 케이스(연결 상태 충돌, 중복 스폰 등)를 순차적으로 보완
+- 사운드 시스템: BGM 재생 하나부터 시작해 SFX → AMB(환경음) → 각 게임 이벤트 훅 연결 순서로 점진적으로 확장, 매 단계마다 실제 테스트 결과를 반영해 다음 단계 설계를 조정
+- 사거리 표시 라인렌더러도 "우선 동작하는 버전"을 만든 뒤, 실제 플레이 중 발견된 시각적 문제(알파 겹침 등)를 근거로 구조를 재설계하는 반복 과정을 거침
+
+**개인 설정과 공용 문서를 분리해 협업 안정성 확보**
+- **개인**: `CLAUDE.md` — 버전관리 제외(gitignore), 각자 로컬에서 자유롭게 커스터마이즈하는 개인 작업 지시 파일
+- **공용**: `contestinfo.md`(대회 개요), `develop.md`(개발 환경/규약), `projectinfo.md`(프로젝트 목표/기획) — 버전관리 대상, 팀 공통 규약으로 임의 수정 금지
+- 이렇게 분리해둔 덕분에 팀원이 다른 AI 도구(예: 다른 에이전트/모델)를 쓰더라도, 공용 md 문서만 프로젝트 지식으로 넣어주면 동일한 목표/규칙을 공유한 채로 협업을 진행할 수 있었음 — 특정 AI 도구에 종속되지 않는 협업 구조
+
+
+## 3. 사운드 리소스 제작 
+— AI Tool : ElevenLabs Sound Effects
+
+- **투척 시작음(휙→후웅)**: `Low deep whoosh of a heavy object flying through the air in an arc, slow rising and falling air swirl, cartoonish western game style, warm and rounded tone, 0.5-0.8 seconds`
+- **착지음**: `Small heavy object dropping and thudding onto dusty dirt ground, western town street, soft dull thump, no metal ring, cartoonish arcade game style, 0.3-0.5 seconds`
+- **일반 버튼 클릭**: `UI button click, tapping a wooden plank with a metal rim edge, short wooden knock with a subtle metallic edge resonance, western saloon sign style, crisp and short, 0.2 seconds`
+- **스킬 선택 버튼 클릭**: `UI confirm sound: first a short knock on a wooden plank with a metal rim, then a soft airy hiss like air slowly leaking and seeping out, starting at medium intensity and gently fading away to nothing, no swell or rise, western saloon UI style, 0.8-1.2 seconds`
+
+— AI Tool : Suno
+
+- **타이틀BGM: Spaghetti western instrumental with upbeat medium-tempo gallop, twangy guitar riffs, snapped snare, and a minor-key whistle motif; intro opens sparse with guitar, low toms, and dry handclaps, verses build with mariachi-style brass stabs and tremolo lead, middle section strips back to plucked bass and ominous bells before the final push; short drum fills, echo-drenched rim shots, and rising string swells add tension; bright, dusty, and punchy mix with cinematic stereo width
+- **인게임BGM: Western retro pop with a jaunty swung rhythm and punchy 120 BPM pulse; verse-like sections trade between muted guitar twang and clacking percussion, the build adds handclaps and rising whistles, and the main lift brings bold brass stabs with a playful stomp, Add quick reverse swells, saddle-leather snaps, and call-and-response guitar licks between phrases, Bright, dry, and cinematic with a mischievous, road-ready mix
+
+
+(BGM 등 이 목록에 없는 나머지 오디오 리소스는 아트 담당자가 별도 제작 — [※ 아트 담당자 확인 후 도구/출처 기재 필요])
+
+## 4. 디자인 컨셉 아트 및  리소스 제작 
+
+— AI Tool : Google_Gemini(Nano Banana)
+
+- **타이틀로고: Please design a game title. The title is 'Desperado Arena'. I would like it to be small enough to fit inside a red box.
+- **캐릭터디자인: A minimalist line art illustration of a cute cowboy character, simple thick brown lines, white background, wearing a cowboy hat and a bandana around the neck, holding a small pistol, flat design, cute and playful doodle style, vector graphics --ar 1:1
+Pixel, dot character, quality improvement, 24 colors
+- **배경디자인: Please create the Top view game design style, remove the UI, create a Western style, provide three different character designs, and work on gameplay mockups.
+- **타이틀배경: Pixel art 2D side-scrolling platformer, old west ghost town, sepia tone. A full pixel-art scene depicting a derelict, wind-blown ghost town at twilight. The central character, a single pixel-art cowboy in a brown hat and duster, is the sole figure, standing mid-screen looking over a deserted sandy street. All other non-fixed elements from image_0.png, such as the distant figures and the specific sand formations they stood on, are removed, leaving only natural sand, scrub, and the two primary cacti in the foreground. The old buildings are still present: on the far left, a bank/office; next to it, a dilapidated two-story building; to the right, the main 'SALOON' building with its sign; and on the far right, the partial 'GENERAL' store sign. All buildings are intact but clearly aged and unoccupied. The central area between the buildings is an empty, open view to distant, sepia-toned canyon walls under a fading, clear sky. The overall ground is detailed sand with a few more scattered rocks. The perspective is a classic 2D side-scrolling view, clean and detailed. The colors are muted, sepia-toned, with some warm, fading orange light on the horizon. The ground and environment are perfectly level. The foreground cacti are as seen in image_0.png, plus more scattered small scrub brush. The central cowboy character from image_0.png remains, still standing with his hand near his holster, looking out at the town. 
+- **UI/UX디자인: A design suitable for the gameplay screen. There are three cards in the center, each containing a skill icon, name, type, and description, with a button at the bottom for modification. A yellow border appears when selected. A final selection button is located at the bottom center.
+- **이펙트: Please create a pixel art image of 6 consecutive frames depicting the process of an explosion starting, gradually growing, and then disappearing on a white background. Do not include anything other than anything related to the explosion.
+
+## 5. 외부 에셋 / 오픈소스 출처
+
+| 리소스 | 출처 | 라이선스 |
+|---|---|---|
+| Photon PUN2 | Unity Asset Store (Exit Games / Photon Engine) | Photon 자체 라이선스 약관 (무료 티어 사용) |
+| NotoSansKR-Regular.ttf | Google Noto Fonts | SIL Open Font License 1.1 |
+| NeoDunggeunmoPro-Regular.ttf | 무료 배포 한글 폰트 (눈누 noonnu.cc 등록) | OFL (폰트 파일 수정/복제/배포 가능, 단 폰트 파일 자체의 유료 판매는 금지) |

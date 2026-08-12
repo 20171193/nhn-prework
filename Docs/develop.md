@@ -36,8 +36,8 @@
 
 ## 4. 빌드 & 배포
 - **빌드 타겟**: WebGL (1순위, GitHub Pages 배포), APK (검토 중)
-- **WebGL 배포 경로**: (⚠️ gh-pages 브랜치 또는 /docs 폴더 설정 후 URL 채워넣기)
-- **사전 과제 제출용 플레이 링크**: 위 GitHub Pages URL과 동일
+- **WebGL 배포 경로**: `gh-pages` 브랜치 (root), https://20171193.github.io/nhn-prework/
+- **사전 과제 제출용 플레이 링크**: 위 GitHub Pages URL과 동일 (2026-08-09 최종 완성 빌드로 재배포 완료)
 
 ## 5. 확정된 기술 관련 규칙 (projectinfo.md와 연동)
 - 점수 계산 로직은 별도 함수/모듈로 분리 (v1 단순 승패 점수제 → 추후 개편 대비)
